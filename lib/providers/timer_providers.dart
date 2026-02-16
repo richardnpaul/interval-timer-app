@@ -21,8 +21,6 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
     FlutterBackgroundService().on('update').listen((event) {
       if (event != null && event['timers'] != null) {
          final List<dynamic> timersData = event['timers'];
-         // "Single Source of Truth" - we trust the service entirely.
-         // This handles app restarts (where local state is empty) automatically.
          try {
             state = timersData.map((data) => ActiveTimer.fromJson(Map<String, dynamic>.from(data))).toList();
          } catch (e) {
