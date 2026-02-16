@@ -1,5 +1,6 @@
 
 
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:audio_session/audio_session.dart' as session;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,16 @@ class AudioService {
 
   AudioPlayer get player => _player ??= AudioPlayer();
 
+  final Set<String> _activePaths = {};
+
   Future<void> playAlarm(String? customPath) async {
+    final path = customPath ?? 'DEFAULT_BEEP';
+
+    // Simple throttle: don't play same sound if it started < 500ms ago
+    if (_activePaths.contains(path)) return;
+    _activePaths.add(path);
+    Timer(const Duration(milliseconds: 500), () => _activePaths.remove(path));
+
     try {
       // 1. Request Audio Focus (Duck others)
       final audioSession = await session.AudioSession.instance;
@@ -37,7 +47,6 @@ class AudioService {
           await player.play(DeviceFileSource(customPath));
         } else {
           // Play default asset
-          // For now, we will just play a release tone if no asset
           await player.play(AssetSource('sounds/beep.mp3'));
         }
 
@@ -48,7 +57,7 @@ class AudioService {
       }
     } catch (e) {
       print('AudioService error: $e');
-      // Fallback: try playing without session management if it fails
+      // Fallback
       if (customPath != null && customPath.isNotEmpty) {
         await player.play(DeviceFileSource(customPath));
       } else {

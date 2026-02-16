@@ -26,7 +26,8 @@ class ActiveTimer {
         totalSeconds = preset.durationSeconds,
         state = state ?? TimerState.paused;
 
-  /// Returns true if the timer has finished
+  /// Process a single second tick.
+  /// Returns true if the timer has just finished (triggered an alarm).
   bool tick() {
     if (state != TimerState.running) return false;
 
@@ -35,9 +36,12 @@ class ActiveTimer {
     }
 
     if (remainingSeconds == 0) {
-      // Logic for autoRestart is handled by the Service/Manager,
-      // not the model itself, to avoid side effects here.
-      state = TimerState.finished;
+      if (preset.autoRestart) {
+        remainingSeconds = totalSeconds;
+        // State remains running
+      } else {
+        state = TimerState.finished;
+      }
       return true;
     }
     return false;

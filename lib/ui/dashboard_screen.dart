@@ -25,11 +25,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _checkPermissions() async {
-    await Permission.notification.request();
+    await ref.read(permissionServiceProvider).requestNotificationPermission();
   }
 
   Future<void> _loadWakelockState() async {
-    final enabled = await WakelockPlus.enabled;
+    final enabled = await ref.read(settingsServiceProvider).isWakelockEnabled();
     setState(() {
       _keepAwake = enabled;
     });
@@ -39,11 +39,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     setState(() {
       _keepAwake = !_keepAwake;
     });
-    if (_keepAwake) {
-      await WakelockPlus.enable();
-    } else {
-      await WakelockPlus.disable();
-    }
+    await ref.read(settingsServiceProvider).setWakelock(_keepAwake);
   }
 
   @override

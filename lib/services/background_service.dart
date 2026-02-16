@@ -7,71 +7,48 @@ import 'package:interval_timer_app/models/active_timer.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';
 import 'package:interval_timer_app/services/audio_service.dart';
 
-@pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
-  try {
-    DartPluginRegistrant.ensureInitialized();
-  } catch (e) {
-    // Log error but continue as some plugins might still work
-  }
-
-  // Defer initialization of plugins that might fail in the background isolate
-  AudioService? audioService;
-  FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
+class BackgroundTimerManager {
+  final ServiceInstance service;
+  final AudioService audioService;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   List<ActiveTimer> backgroundTimers = [];
+  Timer? _ticker;
 
-  // Lazily initialize plugins
-  void ensureInitialized() {
-    audioService ??= AudioService();
-    flutterLocalNotificationsPlugin ??= FlutterLocalNotificationsPlugin();
+  BackgroundTimerManager(this.service, this.audioService, this.flutterLocalNotificationsPlugin);
+
+  void start() {
+    _ticker = Timer.periodic(const Duration(seconds: 1), onTick);
   }
 
-  service.on('syncTimers').listen((event) {
-     if (event == null) return;
-     if (event.containsKey('timers')) {
-       final List<dynamic> rawTimers = event['timers'];
-       backgroundTimers = rawTimers.map((e) {
-          final presetJson = e['preset'] as Map<String, dynamic>;
-          return ActiveTimer(
-            id: e['id'],
-            preset: TimerPreset.fromJson(presetJson),
-            remainingSeconds: e['remainingSeconds'],
-            state: TimerState.values.firstWhere((s) => s.toString() == e['state']),
-          );
-       }).toList();
-     }
-  });
+  bool get isRunning => _ticker != null;
 
-  service.on('stop').listen((event) {
-    service.stopSelf();
-  });
+  void stop() {
+    _ticker?.cancel();
+    _ticker = null;
+  }
 
-  Timer.periodic(const Duration(seconds: 1), (timer) async {
-    if (backgroundTimers.isEmpty) {
-       // Idle state
-    } else {
+  void syncTimers(List<dynamic> rawTimers) {
+    backgroundTimers = rawTimers.map((e) {
+      final presetJson = e['preset'] as Map<String, dynamic>;
+      return ActiveTimer(
+        id: e['id'],
+        preset: TimerPreset.fromJson(presetJson),
+        remainingSeconds: e['remainingSeconds'],
+        state: TimerState.values.firstWhere((s) => s.toString() == e['state']),
+      );
+    }).toList();
+  }
+
+  Future<void> onTick(Timer timer) async {
+    if (backgroundTimers.isNotEmpty) {
       bool soundPlayed = false;
 
       for (var t in backgroundTimers) {
         if (t.state == TimerState.running) {
-          if (t.remainingSeconds > 0) {
-            t.remainingSeconds--;
-          }
-
-          if (t.remainingSeconds == 0) {
-            // Timer Finished
-            if (!soundPlayed) {
-               ensureInitialized();
-               audioService?.playAlarm(t.preset.soundPath);
-               soundPlayed = true;
-            }
-
-            if (t.preset.autoRestart) {
-               t.remainingSeconds = t.preset.durationSeconds;
-            } else {
-               t.state = TimerState.finished;
-            }
+          if (t.tick()) {
+            // Timer Finished/Restarted
+            audioService.playAlarm(t.preset.soundPath);
           }
         }
       }
@@ -86,11 +63,10 @@ void onStart(ServiceInstance service) async {
 
     if (service is AndroidServiceInstance) {
       try {
-        if (await service.isForegroundService()) {
+        if (await (service as AndroidServiceInstance).isForegroundService()) {
           final runningCount = backgroundTimers.where((t) => t.state == TimerState.running).length;
 
-          ensureInitialized();
-          flutterLocalNotificationsPlugin?.show(
+          flutterLocalNotificationsPlugin.show(
             id: 888,
             title: 'Interval Timer',
             body: runningCount > 0 ? '$runningCount timers running' : 'Ready',
@@ -108,7 +84,35 @@ void onStart(ServiceInstance service) async {
         // Ignore errors from isForegroundService in background isolate
       }
     }
+  }
+}
+
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) async {
+  try {
+    DartPluginRegistrant.ensureInitialized();
+  } catch (e) {
+    // Log error but continue as some plugins might still work
+  }
+
+  final audioService = AudioService();
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  final manager = BackgroundTimerManager(service, audioService, flutterLocalNotificationsPlugin);
+
+  service.on('syncTimers').listen((event) {
+     if (event == null) return;
+     if (event.containsKey('timers')) {
+       manager.syncTimers(event['timers']);
+     }
   });
+
+  service.on('stop').listen((event) {
+    manager.stop();
+    service.stopSelf();
+  });
+
+  manager.start();
 }
 
 Future<void> initializeService() async {

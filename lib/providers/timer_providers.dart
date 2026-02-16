@@ -2,9 +2,19 @@
 
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/active_timer.dart';
 import '../models/timer_preset.dart';
 import '../models/timer_group.dart';
+
+// Provide a wrapper for the background service to allow mocking in tests.
+class BackgroundServiceWrapper {
+  Stream<Map<String, dynamic>?> on(String method) => FlutterBackgroundService().on(method);
+  void invoke(String method, [Map<String, dynamic>? args]) => FlutterBackgroundService().invoke(method, args);
+}
+
+final backgroundServiceWrapperProvider = Provider<BackgroundServiceWrapper>((ref) => BackgroundServiceWrapper());
 
 // The source of truth for all currently active (running/paused) timers.
 final activeTimersProvider =
@@ -18,7 +28,7 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
   }
 
   void _initServiceListener() {
-    FlutterBackgroundService().on('update').listen((event) {
+    ref.read(backgroundServiceWrapperProvider).on('update').listen((event) {
       if (event != null && event['timers'] != null) {
          final List<dynamic> timersData = event['timers'];
          try {
@@ -31,9 +41,7 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
   }
 
   void _syncToService() {
-     // We schedule this to run slightly later to avoid race conditions with optimistic updates?
-     // No, invoke is async.
-     FlutterBackgroundService().invoke(
+     ref.read(backgroundServiceWrapperProvider).invoke(
        'syncTimers',
        {
          'timers': state.map((t) => t.toJson()).toList(),
@@ -112,3 +120,16 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
     _syncToService();
   }
 }
+
+class PermissionService {
+  Future<PermissionStatus> requestNotificationPermission() => Permission.notification.request();
+}
+
+final permissionServiceProvider = Provider((ref) => PermissionService());
+
+class SettingsService {
+  Future<bool> isWakelockEnabled() => WakelockPlus.enabled;
+  Future<void> setWakelock(bool enabled) => enabled ? WakelockPlus.enable() : WakelockPlus.disable();
+}
+
+final settingsServiceProvider = Provider((ref) => SettingsService());
