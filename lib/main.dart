@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'services/background_service.dart';
@@ -10,11 +9,7 @@ void main() async {
   // Initialize Background Service
   await initializeService();
 
-  runApp(
-    const ProviderScope(
-      child: IntervalTimerApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: IntervalTimerApp()));
 }
 
 class IntervalTimerApp extends StatelessWidget {
@@ -29,7 +24,6 @@ class IntervalTimerApp extends StatelessWidget {
         brightness: Brightness.dark,
         colorSchemeSeed: Colors.deepOrange,
         scaffoldBackgroundColor: const Color(0xFF121212),
-
       ),
       home: const DashboardScreen(),
     );

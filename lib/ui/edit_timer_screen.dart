@@ -1,4 +1,3 @@
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +20,7 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
   int _seconds = 0;
   bool _autoRestart = false;
   String? _soundPath;
+  bool _saveToLibrary = false;
 
   @override
   void initState() {
@@ -32,6 +32,7 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
       _seconds = p.durationSeconds % 60;
       _autoRestart = p.autoRestart;
       _soundPath = p.soundPath;
+      _saveToLibrary = true; // Default to true if editing existing
     } else {
       _minutes = 1; // Default 1 min
     }
@@ -74,7 +75,25 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
       soundPath: _soundPath,
     );
 
-    ref.read(activeTimersProvider.notifier).addTimer(newPreset);
+    if (_saveToLibrary) {
+      ref.read(presetsProvider.notifier).savePreset(newPreset);
+    }
+
+    // If we were just editing a preset from library, we don't necessarily want to *start* it.
+    // But for simplicity in v1, let's say "Save" always starts it if it was a new creation,
+    // or just updates it if it was from library?
+    // Actually, usually "Edit" in library should just save.
+    // "Add" in library should just start.
+
+    // Let's check if it came from library (widget.preset != null)
+    if (widget.preset == null) {
+      ref.read(activeTimersProvider.notifier).addTimer(newPreset);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Preset updated')));
+    }
+
     Navigator.of(context).pop();
   }
 
@@ -83,12 +102,7 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.preset == null ? 'New Timer' : 'Edit Timer'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _save,
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.check), onPressed: _save)],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -108,7 +122,7 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _minutes,
+                  initialValue: _minutes,
                   decoration: const InputDecoration(
                     labelText: 'Minutes',
                     border: OutlineInputBorder(),
@@ -125,7 +139,7 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _seconds,
+                  initialValue: _seconds,
                   decoration: const InputDecoration(
                     labelText: 'Seconds',
                     border: OutlineInputBorder(),
@@ -144,7 +158,9 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
           const SizedBox(height: 24),
           SwitchListTile(
             title: const Text('Auto-Restart (Loop)'),
-            subtitle: const Text('Timer will restart immediately when finished'),
+            subtitle: const Text(
+              'Timer will restart immediately when finished',
+            ),
             value: _autoRestart,
             onChanged: (val) => setState(() => _autoRestart = val),
             contentPadding: EdgeInsets.zero,
@@ -152,20 +168,28 @@ class _EditTimerScreenState extends ConsumerState<EditTimerScreen> {
           const Divider(),
           ListTile(
             title: const Text('Alarm Sound'),
-            subtitle: Text(_soundPath != null
-                ? _soundPath!.split('/').last
-                : 'Default Beep'),
+            subtitle: Text(
+              _soundPath != null ? _soundPath!.split('/').last : 'Default Beep',
+            ),
             trailing: const Icon(Icons.music_note),
             onTap: _pickSound,
             contentPadding: EdgeInsets.zero,
           ),
           if (_soundPath != null)
-             TextButton.icon(
-               icon: const Icon(Icons.clear, size: 16),
-               label: const Text('Reset to Default'),
-               onPressed: () => setState(() => _soundPath = null),
-               style: TextButton.styleFrom(foregroundColor: Colors.red),
-             ),
+            TextButton.icon(
+              icon: const Icon(Icons.clear, size: 16),
+              label: const Text('Reset to Default'),
+              onPressed: () => setState(() => _soundPath = null),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+            ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('Save to Saved Presets'),
+            subtitle: const Text('Access this timer quickly from the library'),
+            value: _saveToLibrary,
+            onChanged: (val) => setState(() => _saveToLibrary = val),
+            contentPadding: EdgeInsets.zero,
+          ),
         ],
       ),
     );

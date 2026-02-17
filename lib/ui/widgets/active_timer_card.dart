@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/models/active_timer.dart';
@@ -7,10 +6,7 @@ import 'package:interval_timer_app/providers/timer_providers.dart';
 class ActiveTimerCard extends ConsumerWidget {
   final ActiveTimer timer;
 
-  const ActiveTimerCard({
-    super.key,
-    required this.timer,
-  });
+  const ActiveTimerCard({super.key, required this.timer});
 
   String _formatTime(int seconds) {
     final m = seconds ~/ 60;
@@ -50,9 +46,9 @@ class ActiveTimerCard extends ConsumerWidget {
                 Text(
                   _formatTime(timer.remainingSeconds),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFeatures: [const FontFeature.tabularFigures()],
-                      ),
+                    fontWeight: FontWeight.bold,
+                    fontFeatures: [const FontFeature.tabularFigures()],
+                  ),
                 ),
               ],
             ),
@@ -93,9 +89,13 @@ class ActiveTimerCard extends ConsumerWidget {
                 icon: const Icon(Icons.play_arrow),
                 onPressed: () {
                   if (timer.state == TimerState.finished) {
-                    ref.read(activeTimersProvider.notifier).restartTimer(timer.id);
+                    ref
+                        .read(activeTimersProvider.notifier)
+                        .restartTimer(timer.id);
                   } else {
-                    ref.read(activeTimersProvider.notifier).resumeTimer(timer.id);
+                    ref
+                        .read(activeTimersProvider.notifier)
+                        .resumeTimer(timer.id);
                   }
                 },
               ),
