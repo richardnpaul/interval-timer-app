@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
 import 'package:interval_timer_app/ui/edit_timer_screen.dart';
 import 'package:interval_timer_app/ui/presets_library_screen.dart';
+import 'package:interval_timer_app/ui/groups_library_screen.dart';
 import 'widgets/active_timer_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -43,10 +44,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Widget body;
+    switch (_currentIndex) {
+      case 0:
+        body = _buildActiveTimers();
+        break;
+      case 1:
+        body = const PresetsLibraryScreen();
+        break;
+      case 2:
+        body = const GroupsLibraryScreen();
+        break;
+      default:
+        body = _buildActiveTimers();
+    }
+
     return Scaffold(
-      body: _currentIndex == 0
-          ? _buildActiveTimers()
-          : const PresetsLibraryScreen(),
+      body: body,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -54,7 +68,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Active'),
           BottomNavigationBarItem(
             icon: Icon(Icons.library_books),
-            label: 'Library',
+            label: 'Presets',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.group_work),
+            label: 'Groups',
           ),
         ],
       ),
@@ -103,7 +121,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.timer_outlined, size: 64, color: Colors.grey),
+                  const Icon(
+                    Icons.timer_outlined,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No timers running',

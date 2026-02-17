@@ -39,6 +39,8 @@ class BackgroundTimerManager {
         preset: TimerPreset.fromJson(presetJson),
         remainingSeconds: e['remainingSeconds'],
         state: TimerState.values.firstWhere((s) => s.toString() == e['state']),
+        groupId: e['groupId'],
+        nextTimerId: e['nextTimerId'],
       );
     }).toList();
   }
@@ -50,6 +52,17 @@ class BackgroundTimerManager {
           if (t.tick()) {
             // Timer Finished/Restarted
             audioService.playAlarm(t.preset.soundPath);
+
+            // Sequential Execution Logic:
+            // If this timer has a nextTimerId, find it and start it.
+            if (t.state == TimerState.finished && t.nextTimerId != null) {
+              final nextIndex = backgroundTimers.indexWhere(
+                (nt) => nt.id == t.nextTimerId,
+              );
+              if (nextIndex != -1) {
+                backgroundTimers[nextIndex].state = TimerState.running;
+              }
+            }
           }
         }
       }

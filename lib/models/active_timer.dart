@@ -10,12 +10,16 @@ class ActiveTimer {
   // We keep track of the total duration for progress bars
   final int totalSeconds;
   TimerState state;
+  final String? groupId;
+  final String? nextTimerId;
 
   ActiveTimer({
     String? id,
     required this.preset,
     int? remainingSeconds,
     TimerState? state,
+    this.groupId,
+    this.nextTimerId,
   }) : id = id ?? const Uuid().v4(),
        remainingSeconds = remainingSeconds ?? preset.durationSeconds,
        totalSeconds = preset.durationSeconds,
@@ -55,6 +59,8 @@ class ActiveTimer {
       'remainingSeconds': remainingSeconds,
       'totalSeconds': totalSeconds,
       'state': state.toString(),
+      'groupId': groupId,
+      'nextTimerId': nextTimerId,
     };
   }
 
@@ -64,6 +70,8 @@ class ActiveTimer {
       preset: TimerPreset.fromJson(json['preset']),
       remainingSeconds: json['remainingSeconds'],
       state: TimerState.values.firstWhere((e) => e.toString() == json['state']),
+      groupId: json['groupId'],
+      nextTimerId: json['nextTimerId'],
     );
   }
 }

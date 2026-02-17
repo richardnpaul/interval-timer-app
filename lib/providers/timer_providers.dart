@@ -3,6 +3,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:uuid/uuid.dart';
 import '../models/active_timer.dart';
 import '../models/timer_preset.dart';
 import '../models/timer_group.dart';
@@ -148,14 +149,44 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
   }
 
   void addGroup(TimerGroup group, List<TimerPreset> allPresets) {
-    // Determine which timers are in this group
-    final timersToAdd = allPresets
-        .where((preset) => group.timerIds.contains(preset.id))
-        .map((preset) => ActiveTimer(preset: preset, state: TimerState.running))
+    // Determine which timers are in this group and maintain their order
+    final orderedPresets = group.timerIds
+        .map((id) => allPresets.firstWhere((p) => p.id == id))
         .toList();
 
-    // In parallel mode, we simply add them all to the active list
-    state = [...state, ...timersToAdd];
+    if (group.executionMode == GroupExecutionMode.parallel) {
+      final timersToAdd = orderedPresets
+          .map(
+            (preset) => ActiveTimer(
+              preset: preset,
+              state: TimerState.running,
+              groupId: group.id,
+            ),
+          )
+          .toList();
+      state = [...state, ...timersToAdd];
+    } else {
+      // Sequence mode
+      final List<ActiveTimer> sequentialTimers = [];
+      String? lastTimerId;
+
+      // We process in reverse to set nextTimerId easily
+      for (int i = orderedPresets.length - 1; i >= 0; i--) {
+        final preset = orderedPresets[i];
+        final currentTimerId = Uuid().v4();
+        final timer = ActiveTimer(
+          id: currentTimerId,
+          preset: preset,
+          // Only the first timer starts as running
+          state: i == 0 ? TimerState.running : TimerState.paused,
+          groupId: group.id,
+          nextTimerId: lastTimerId,
+        );
+        sequentialTimers.insert(0, timer);
+        lastTimerId = currentTimerId;
+      }
+      state = [...state, ...sequentialTimers];
+    }
     _syncToService();
   }
 
