@@ -1,10 +1,41 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/active_timer.dart';
 import '../models/timer_preset.dart';
 import '../models/timer_group.dart';
 import 'package:interval_timer_app/services/storage_service.dart';
+
+// --- Services & Wrappers ---
+
+// Provide a wrapper for the background service to allow mocking in tests.
+class BackgroundServiceWrapper {
+  Stream<Map<String, dynamic>?> on(String method) =>
+      FlutterBackgroundService().on(method);
+  void invoke(String method, [Map<String, dynamic>? args]) =>
+      FlutterBackgroundService().invoke(method, args);
+}
+
+final backgroundServiceWrapperProvider = Provider<BackgroundServiceWrapper>(
+  (ref) => BackgroundServiceWrapper(),
+);
+
+class PermissionService {
+  Future<PermissionStatus> requestNotificationPermission() =>
+      Permission.notification.request();
+}
+
+final permissionServiceProvider = Provider((ref) => PermissionService());
+
+class SettingsService {
+  Future<bool> isWakelockEnabled() => WakelockPlus.enabled;
+  Future<void> setWakelock(bool enabled) =>
+      enabled ? WakelockPlus.enable() : WakelockPlus.disable();
+}
+
+final settingsServiceProvider = Provider((ref) => SettingsService());
 
 // --- Presets ---
 
@@ -70,6 +101,8 @@ class GroupsNotifier extends Notifier<List<TimerGroup>> {
   }
 }
 
+// --- Active Timers ---
+
 // The source of truth for all currently active (running/paused) timers.
 final activeTimersProvider =
     NotifierProvider<ActiveTimersNotifier, List<ActiveTimer>>(
@@ -84,7 +117,7 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
   }
 
   void _initServiceListener() {
-    FlutterBackgroundService().on('update').listen((event) {
+    ref.read(backgroundServiceWrapperProvider).on('update').listen((event) {
       if (event != null && event['timers'] != null) {
         final List<dynamic> timersData = event['timers'];
         // "Single Source of Truth" - we trust the service entirely.
@@ -103,9 +136,7 @@ class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
   }
 
   void _syncToService() {
-    // We schedule this to run slightly later to avoid race conditions with optimistic updates?
-    // No, invoke is async.
-    FlutterBackgroundService().invoke('syncTimers', {
+    ref.read(backgroundServiceWrapperProvider).invoke('syncTimers', {
       'timers': state.map((t) => t.toJson()).toList(),
     });
   }

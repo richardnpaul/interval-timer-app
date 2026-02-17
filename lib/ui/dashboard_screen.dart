@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
 import 'package:interval_timer_app/ui/edit_timer_screen.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-import 'widgets/active_timer_card.dart';
-
 import 'package:interval_timer_app/ui/presets_library_screen.dart';
+import 'widgets/active_timer_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -27,11 +24,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _checkPermissions() async {
-    await Permission.notification.request();
+    await ref.read(permissionServiceProvider).requestNotificationPermission();
   }
 
   Future<void> _loadWakelockState() async {
-    final enabled = await WakelockPlus.enabled;
+    final enabled = await ref.read(settingsServiceProvider).isWakelockEnabled();
     setState(() {
       _keepAwake = enabled;
     });
@@ -41,11 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     setState(() {
       _keepAwake = !_keepAwake;
     });
-    if (_keepAwake) {
-      await WakelockPlus.enable();
-    } else {
-      await WakelockPlus.disable();
-    }
+    await ref.read(settingsServiceProvider).setWakelock(_keepAwake);
   }
 
   @override
