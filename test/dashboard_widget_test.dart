@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/ui/dashboard_screen.dart';
 import 'package:interval_timer_app/services/audio_service.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/models/active_timer.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class MockBackgroundServiceWrapper extends BackgroundServiceWrapper {
-  final StreamController<Map<String, dynamic>?> _controller = StreamController.broadcast();
+  final StreamController<Map<String, dynamic>?> _controller =
+      StreamController.broadcast();
   @override
   Stream<Map<String, dynamic>?> on(String method) => _controller.stream;
   @override
@@ -20,7 +19,8 @@ class MockBackgroundServiceWrapper extends BackgroundServiceWrapper {
 
 class MockPermissionService extends PermissionService {
   @override
-  Future<PermissionStatus> requestNotificationPermission() async => PermissionStatus.granted;
+  Future<PermissionStatus> requestNotificationPermission() async =>
+      PermissionStatus.granted;
 }
 
 class MockSettingsService extends SettingsService {
@@ -58,13 +58,13 @@ void main() {
         settingsServiceProvider.overrideWithValue(mockSettings),
         audioServiceProvider.overrideWithValue(mockAudio),
       ],
-      child: const MaterialApp(
-        home: DashboardScreen(),
-      ),
+      child: const MaterialApp(home: DashboardScreen()),
     );
   }
 
-  testWidgets('Dashboard should show empty state when no timers are running', (WidgetTester tester) async {
+  testWidgets('Dashboard should show empty state when no timers are running', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
 
@@ -72,7 +72,9 @@ void main() {
     expect(find.text('Tap + to start a timer'), findsOneWidget);
   });
 
-  testWidgets('Dashboard should show ActiveTimerCard when a timer is added', (WidgetTester tester) async {
+  testWidgets('Dashboard should show ActiveTimerCard when a timer is added', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
 
@@ -80,10 +82,12 @@ void main() {
     expect(find.byType(Card), findsNothing);
 
     // Add a timer manually via the notifier
-    final container = ProviderScope.containerOf(tester.element(find.byType(DashboardScreen)));
-    container.read(activeTimersProvider.notifier).addTimer(
-      TimerPreset(label: 'Workout', durationSeconds: 60),
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(DashboardScreen)),
     );
+    container
+        .read(activeTimersProvider.notifier)
+        .addTimer(TimerPreset(label: 'Workout', durationSeconds: 60));
 
     await tester.pump();
 
@@ -92,7 +96,9 @@ void main() {
     expect(find.text('01:00'), findsOneWidget);
   });
 
-  testWidgets('Should be able to add a new timer via EditTimerScreen', (WidgetTester tester) async {
+  testWidgets('Should be able to add a new timer via EditTimerScreen', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(buildTestWidget());
     await tester.pump();
 
@@ -116,20 +122,22 @@ void main() {
     expect(find.byType(Card), findsOneWidget);
   });
 
-  testWidgets('Settings: Toggle Screen Awake should work', (WidgetTester tester) async {
+  testWidgets('Settings: Toggle Screen Awake should work', (
+    WidgetTester tester,
+  ) async {
     final mockSettings = MockSettingsService();
     // Re-setup with local mock to avoid setUp overlap if needed, though buildTestWidget uses current mock.
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          backgroundServiceWrapperProvider.overrideWithValue(MockBackgroundServiceWrapper()),
+          backgroundServiceWrapperProvider.overrideWithValue(
+            MockBackgroundServiceWrapper(),
+          ),
           permissionServiceProvider.overrideWithValue(MockPermissionService()),
           settingsServiceProvider.overrideWithValue(mockSettings),
         ],
-        child: const MaterialApp(
-          home: DashboardScreen(),
-        ),
+        child: const MaterialApp(home: DashboardScreen()),
       ),
     );
     await tester.pump();

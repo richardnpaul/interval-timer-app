@@ -1,6 +1,5 @@
-
-
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:audio_session/audio_session.dart' as session;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,18 +26,22 @@ class AudioService {
     try {
       // 1. Request Audio Focus (Duck others)
       final audioSession = await session.AudioSession.instance;
-      await audioSession.configure(const session.AudioSessionConfiguration(
-        avAudioSessionCategory: session.AVAudioSessionCategory.playback,
-        avAudioSessionCategoryOptions: session.AVAudioSessionCategoryOptions.duckOthers,
-        avAudioSessionMode: session.AVAudioSessionMode.defaultMode,
-        avAudioSessionRouteSharingPolicy:
-            session.AVAudioSessionRouteSharingPolicy.defaultPolicy,
-        androidAudioAttributes: session.AndroidAudioAttributes(
-          contentType: session.AndroidAudioContentType.sonification,
-          usage: session.AndroidAudioUsage.alarm,
+      await audioSession.configure(
+        const session.AudioSessionConfiguration(
+          avAudioSessionCategory: session.AVAudioSessionCategory.playback,
+          avAudioSessionCategoryOptions:
+              session.AVAudioSessionCategoryOptions.duckOthers,
+          avAudioSessionMode: session.AVAudioSessionMode.defaultMode,
+          avAudioSessionRouteSharingPolicy:
+              session.AVAudioSessionRouteSharingPolicy.defaultPolicy,
+          androidAudioAttributes: session.AndroidAudioAttributes(
+            contentType: session.AndroidAudioContentType.sonification,
+            usage: session.AndroidAudioUsage.alarm,
+          ),
+          androidAudioFocusGainType:
+              session.AndroidAudioFocusGainType.gainTransientMayDuck,
         ),
-        androidAudioFocusGainType: session.AndroidAudioFocusGainType.gainTransientMayDuck,
-      ));
+      );
 
       if (await audioSession.setActive(true)) {
         // 2. Play Sound
@@ -56,7 +59,7 @@ class AudioService {
         });
       }
     } catch (e) {
-      print('AudioService error: $e');
+      debugPrint('AudioService error: $e');
       // Fallback
       if (customPath != null && customPath.isNotEmpty) {
         await player.play(DeviceFileSource(customPath));

@@ -1,33 +1,38 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:interval_timer_app/models/active_timer.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';
 
 void main() {
   group('ActiveTimer Logic Tests', () {
-    test('Timer should decrement remainingSeconds when ticked while running', () {
-      final preset = TimerPreset(label: 'Test', durationSeconds: 10);
-      final timer = ActiveTimer(preset: preset);
-      timer.state = TimerState.running;
+    test(
+      'Timer should decrement remainingSeconds when ticked while running',
+      () {
+        final preset = TimerPreset(label: 'Test', durationSeconds: 10);
+        final timer = ActiveTimer(preset: preset);
+        timer.state = TimerState.running;
 
-      final finished = timer.tick();
+        final finished = timer.tick();
 
-      expect(timer.remainingSeconds, 9);
-      expect(finished, false);
-      expect(timer.state, TimerState.running);
-    });
+        expect(timer.remainingSeconds, 9);
+        expect(finished, false);
+        expect(timer.state, TimerState.running);
+      },
+    );
 
-    test('Timer should transition to finished state when ticking at 1 second', () {
-      final preset = TimerPreset(label: 'Test', durationSeconds: 1);
-      final timer = ActiveTimer(preset: preset);
-      timer.state = TimerState.running;
+    test(
+      'Timer should transition to finished state when ticking at 1 second',
+      () {
+        final preset = TimerPreset(label: 'Test', durationSeconds: 1);
+        final timer = ActiveTimer(preset: preset);
+        timer.state = TimerState.running;
 
-      final finished = timer.tick();
+        final finished = timer.tick();
 
-      expect(timer.remainingSeconds, 0);
-      expect(finished, true);
-      expect(timer.state, TimerState.finished);
-    });
+        expect(timer.remainingSeconds, 0);
+        expect(finished, true);
+        expect(timer.state, TimerState.finished);
+      },
+    );
 
     test('Timer should not decrement if state is paused', () {
       final preset = TimerPreset(label: 'Test', durationSeconds: 10);
@@ -41,7 +46,11 @@ void main() {
     });
 
     test('Timer should auto-restart if autoRestart is true', () {
-      final preset = TimerPreset(label: 'Test', durationSeconds: 2, autoRestart: true);
+      final preset = TimerPreset(
+        label: 'Test',
+        durationSeconds: 2,
+        autoRestart: true,
+      );
       final timer = ActiveTimer(preset: preset);
       timer.state = TimerState.running;
 

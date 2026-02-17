@@ -1,4 +1,3 @@
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:interval_timer_app/models/active_timer.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';

@@ -1,12 +1,7 @@
-
 import 'package:uuid/uuid.dart';
 import 'timer_preset.dart';
 
-enum TimerState {
-  running,
-  paused,
-  finished,
-}
+enum TimerState { running, paused, finished }
 
 class ActiveTimer {
   final String id;
@@ -21,10 +16,10 @@ class ActiveTimer {
     required this.preset,
     int? remainingSeconds,
     TimerState? state,
-  })  : id = id ?? const Uuid().v4(),
-        remainingSeconds = remainingSeconds ?? preset.durationSeconds,
-        totalSeconds = preset.durationSeconds,
-        state = state ?? TimerState.paused;
+  }) : id = id ?? const Uuid().v4(),
+       remainingSeconds = remainingSeconds ?? preset.durationSeconds,
+       totalSeconds = preset.durationSeconds,
+       state = state ?? TimerState.paused;
 
   /// Process a single second tick.
   /// Returns true if the timer has just finished (triggered an alarm).

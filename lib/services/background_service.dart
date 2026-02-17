@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -15,7 +14,11 @@ class BackgroundTimerManager {
   List<ActiveTimer> backgroundTimers = [];
   Timer? _ticker;
 
-  BackgroundTimerManager(this.service, this.audioService, this.flutterLocalNotificationsPlugin);
+  BackgroundTimerManager(
+    this.service,
+    this.audioService,
+    this.flutterLocalNotificationsPlugin,
+  );
 
   void start() {
     _ticker = Timer.periodic(const Duration(seconds: 1), onTick);
@@ -42,8 +45,6 @@ class BackgroundTimerManager {
 
   Future<void> onTick(Timer timer) async {
     if (backgroundTimers.isNotEmpty) {
-      bool soundPlayed = false;
-
       for (var t in backgroundTimers) {
         if (t.state == TimerState.running) {
           if (t.tick()) {
@@ -53,18 +54,17 @@ class BackgroundTimerManager {
         }
       }
 
-      service.invoke(
-        'update',
-        {
-          'timers': backgroundTimers.map((t) => t.toJson()).toList(),
-        },
-      );
+      service.invoke('update', {
+        'timers': backgroundTimers.map((t) => t.toJson()).toList(),
+      });
     }
 
     if (service is AndroidServiceInstance) {
       try {
         if (await (service as AndroidServiceInstance).isForegroundService()) {
-          final runningCount = backgroundTimers.where((t) => t.state == TimerState.running).length;
+          final runningCount = backgroundTimers
+              .where((t) => t.state == TimerState.running)
+              .length;
 
           flutterLocalNotificationsPlugin.show(
             id: 888,
@@ -98,13 +98,17 @@ void onStart(ServiceInstance service) async {
   final audioService = AudioService();
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  final manager = BackgroundTimerManager(service, audioService, flutterLocalNotificationsPlugin);
+  final manager = BackgroundTimerManager(
+    service,
+    audioService,
+    flutterLocalNotificationsPlugin,
+  );
 
   service.on('syncTimers').listen((event) {
-     if (event == null) return;
-     if (event.containsKey('timers')) {
-       manager.syncTimers(event['timers']);
-     }
+    if (event == null) return;
+    if (event.containsKey('timers')) {
+      manager.syncTimers(event['timers']);
+    }
   });
 
   service.on('stop').listen((event) {
@@ -130,7 +134,8 @@ Future<void> initializeService() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -144,14 +149,14 @@ Future<void> initializeService() async {
       foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
-        autoStart: true,
-        onForeground: onStart,
-        onBackground: onStartTimer,
+      autoStart: true,
+      onForeground: onStart,
+      onBackground: onStartTimer,
     ),
   );
 }
 
 @pragma('vm:entry-point')
 bool onStartTimer(ServiceInstance service) {
-    return true;
+  return true;
 }

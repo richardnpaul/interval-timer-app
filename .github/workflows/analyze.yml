@@ -1,0 +1,29 @@
+name: Lint & Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Run Format Check
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run Static Analysis
+        run: flutter analyze --fatal-infos --fatal-warnings
