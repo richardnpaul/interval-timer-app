@@ -26,7 +26,7 @@ void main() {
   });
 
   test(
-    'Should only play one alarm if multiple timers finish simultaneously (Verifying Bug)',
+    'Should play an alarm for each timer that finishes simultaneously',
     () async {
       final p1 = TimerPreset(label: 'T1', durationSeconds: 0);
       final p2 = TimerPreset(label: 'T2', durationSeconds: 0);
