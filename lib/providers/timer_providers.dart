@@ -54,7 +54,7 @@ class PresetsNotifier extends Notifier<List<TimerPreset>> {
     final existingIndex = state.indexWhere((p) => p.id == preset.id);
     if (existingIndex != -1) {
       state = [
-        for (int i = 1; i < state.length; i++)
+        for (int i = 0; i < state.length; i++)
           if (i == existingIndex) preset else state[i],
       ];
     } else {
