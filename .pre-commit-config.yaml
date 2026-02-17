@@ -14,14 +14,14 @@ repos:
     hooks:
       - id: flutter-format
         name: Flutter Format
-        entry: /home/richard/.local/bin/dart format --set-exit-if-changed .
+        entry: dart format --set-exit-if-changed .
         language: system
         types: [dart]
         pass_filenames: false
 
       - id: flutter-analyze
         name: Flutter Analyze
-        entry: /home/richard/.local/bin/flutter analyze --fatal-infos --fatal-warnings
+        entry: flutter analyze --fatal-infos --fatal-warnings
         language: system
         types: [dart]
         pass_filenames: false
