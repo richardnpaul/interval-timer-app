@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -18,19 +17,21 @@ void onStart(ServiceInstance service) async {
   List<ActiveTimer> backgroundTimers = [];
 
   service.on('syncTimers').listen((event) {
-     if (event == null) return;
-     if (event.containsKey('timers')) {
-       final List<dynamic> rawTimers = event['timers'];
-       backgroundTimers = rawTimers.map((e) {
-          final presetJson = e['preset'] as Map<String, dynamic>;
-          return ActiveTimer(
-            id: e['id'],
-            preset: TimerPreset.fromJson(presetJson),
-            remainingSeconds: e['remainingSeconds'],
-            state: TimerState.values.firstWhere((s) => s.toString() == e['state']),
-          );
-       }).toList();
-     }
+    if (event == null) return;
+    if (event.containsKey('timers')) {
+      final List<dynamic> rawTimers = event['timers'];
+      backgroundTimers = rawTimers.map((e) {
+        final presetJson = e['preset'] as Map<String, dynamic>;
+        return ActiveTimer(
+          id: e['id'],
+          preset: TimerPreset.fromJson(presetJson),
+          remainingSeconds: e['remainingSeconds'],
+          state: TimerState.values.firstWhere(
+            (s) => s.toString() == e['state'],
+          ),
+        );
+      }).toList();
+    }
   });
 
   service.on('stop').listen((event) {
@@ -39,7 +40,7 @@ void onStart(ServiceInstance service) async {
 
   Timer.periodic(const Duration(seconds: 1), (timer) async {
     if (backgroundTimers.isEmpty) {
-       // Idle state
+      // Idle state
     } else {
       bool soundPlayed = false;
 
@@ -52,34 +53,37 @@ void onStart(ServiceInstance service) async {
           if (t.remainingSeconds == 0) {
             // Timer Finished
             if (!soundPlayed) {
-               audioService.playAlarm(t.preset.soundPath);
-               soundPlayed = true;
+              audioService.playAlarm(t.preset.soundPath);
+              soundPlayed = true;
             }
 
             if (t.preset.autoRestart) {
-               t.remainingSeconds = t.preset.durationSeconds;
+              t.remainingSeconds = t.preset.durationSeconds;
             } else {
-               t.state = TimerState.finished;
+              t.state = TimerState.finished;
             }
           }
         }
       }
 
-      service.invoke(
-        'update',
-        {
-          'timers': backgroundTimers.map((t) => {
-            'id': t.id,
-            'remainingSeconds': t.remainingSeconds,
-            'state': t.state.toString(),
-          }).toList(),
-        },
-      );
+      service.invoke('update', {
+        'timers': backgroundTimers
+            .map(
+              (t) => {
+                'id': t.id,
+                'remainingSeconds': t.remainingSeconds,
+                'state': t.state.toString(),
+              },
+            )
+            .toList(),
+      });
     }
 
     if (service is AndroidServiceInstance) {
       if (await service.isForegroundService()) {
-        final runningCount = backgroundTimers.where((t) => t.state == TimerState.running).length;
+        final runningCount = backgroundTimers
+            .where((t) => t.state == TimerState.running)
+            .length;
 
         flutterLocalNotificationsPlugin.show(
           id: 888,
@@ -114,7 +118,8 @@ Future<void> initializeService() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -128,14 +133,14 @@ Future<void> initializeService() async {
       foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
-        autoStart: true,
-        onForeground: onStart,
-        onBackground: onStartTimer,
+      autoStart: true,
+      onForeground: onStart,
+      onBackground: onStartTimer,
     ),
   );
 }
 
 @pragma('vm:entry-point')
 bool onStartTimer(ServiceInstance service) {
-    return true;
+  return true;
 }
