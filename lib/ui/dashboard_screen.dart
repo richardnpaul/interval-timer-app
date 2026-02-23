@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
+import 'package:interval_timer_app/ui/active_dashboard_screen.dart';
 import 'package:interval_timer_app/ui/groups_library_screen.dart';
 import 'package:interval_timer_app/ui/presets_library_screen.dart';
 
@@ -28,68 +29,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeRoutine = ref.watch(activeRoutineProvider);
-
     final tabs = [
       const GroupsLibraryScreen(),
       const PresetsLibraryScreen(),
-      // ── Phase 5 placeholder ───────────────────────────────────────────────
-      Center(
-        child: activeRoutine == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.timer_off_outlined,
-                    size: 64,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'No routine running',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Go to Routines and tap ▶ to start one',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ],
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.play_circle_filled,
-                    size: 64,
-                    color: Colors.deepOrangeAccent,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Running: ${activeRoutine.definition.name}',
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.stop),
-                    label: const Text('Stop'),
-                    onPressed: () =>
-                        ref.read(activeRoutineProvider.notifier).stopRoutine(),
-                  ),
-                ],
-              ),
-      ),
+      const ActiveDashboardScreen(),
     ];
 
     return Scaffold(
