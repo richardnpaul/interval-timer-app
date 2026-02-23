@@ -8,17 +8,17 @@ part of 'timer_preset.dart';
 
 TimerPreset _$TimerPresetFromJson(Map<String, dynamic> json) => TimerPreset(
   id: json['id'] as String?,
-  label: json['label'] as String,
-  durationSeconds: (json['durationSeconds'] as num).toInt(),
-  autoRestart: json['autoRestart'] as bool? ?? false,
+  name: json['name'] as String,
+  defaultDuration: (json['defaultDuration'] as num).toInt(),
+  color: json['color'] as String?,
   soundPath: json['soundPath'] as String?,
 );
 
 Map<String, dynamic> _$TimerPresetToJson(TimerPreset instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'label': instance.label,
-      'durationSeconds': instance.durationSeconds,
-      'autoRestart': instance.autoRestart,
+      'name': instance.name,
+      'defaultDuration': instance.defaultDuration,
+      'color': instance.color,
       'soundPath': instance.soundPath,
     };

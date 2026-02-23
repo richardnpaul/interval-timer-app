@@ -6,16 +6,24 @@ part 'timer_preset.g.dart';
 @JsonSerializable()
 class TimerPreset {
   final String id;
-  final String label;
-  final int durationSeconds;
-  final bool autoRestart; // Handles "Looping"
-  final String? soundPath; // Null for default beep
+
+  /// Human-readable name shown in the Library.
+  final String name;
+
+  /// Default duration in seconds when adding to a routine.
+  final int defaultDuration;
+
+  /// Hex color string (e.g. "#FF5733"). Null = app default.
+  final String? color;
+
+  /// Default alarm sound path. Null = built-in beep.
+  final String? soundPath;
 
   TimerPreset({
     String? id,
-    required this.label,
-    required this.durationSeconds,
-    this.autoRestart = false,
+    required this.name,
+    required this.defaultDuration,
+    this.color,
     this.soundPath,
   }) : id = id ?? const Uuid().v4();
 

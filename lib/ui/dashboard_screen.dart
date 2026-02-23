@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/edit_timer_screen.dart';
-import 'package:interval_timer_app/ui/presets_library_screen.dart';
 import 'package:interval_timer_app/ui/groups_library_screen.dart';
-import 'widgets/active_timer_card.dart';
+import 'package:interval_timer_app/ui/presets_library_screen.dart';
 
+/// Root shell with three bottom-navigation tabs:
+///   0 — Routines (build & start);
+///   1 — Library (manage presets);
+///   2 — Active  (Phase 5 placeholder).
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -14,139 +16,106 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  bool _keepAwake = false;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _checkPermissions();
-    _loadWakelockState();
+    ref.read(permissionServiceProvider).requestNotificationPermission();
   }
 
-  Future<void> _checkPermissions() async {
-    await ref.read(permissionServiceProvider).requestNotificationPermission();
-  }
-
-  Future<void> _loadWakelockState() async {
-    final enabled = await ref.read(settingsServiceProvider).isWakelockEnabled();
-    setState(() {
-      _keepAwake = enabled;
-    });
-  }
-
-  Future<void> _toggleWakelock() async {
-    setState(() {
-      _keepAwake = !_keepAwake;
-    });
-    await ref.read(settingsServiceProvider).setWakelock(_keepAwake);
-  }
+  static const _titles = ['Routines', 'Library', 'Active'];
 
   @override
   Widget build(BuildContext context) {
-    Widget body;
-    switch (_currentIndex) {
-      case 0:
-        body = _buildActiveTimers();
-        break;
-      case 1:
-        body = const PresetsLibraryScreen();
-        break;
-      case 2:
-        body = const GroupsLibraryScreen();
-        break;
-      default:
-        body = _buildActiveTimers();
-    }
+    final activeRoutine = ref.watch(activeRoutineProvider);
 
-    return Scaffold(
-      body: body,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Active'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books),
-            label: 'Presets',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group_work),
-            label: 'Groups',
-          ),
-        ],
-      ),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const EditTimerScreen()),
-                );
-              },
-              label: const Text('Start Timer'),
-              icon: const Icon(Icons.add),
-            )
-          : null,
-    );
-  }
-
-  Widget _buildActiveTimers() {
-    final activeTimers = ref.watch(activeTimersProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Parallel Timer'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _keepAwake ? Icons.wb_sunny : Icons.wb_sunny_outlined,
-              color: _keepAwake ? Colors.orange : null,
-            ),
-            tooltip: 'Keep Screen On',
-            onPressed: _toggleWakelock,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Global settings coming soon!')),
-              );
-            },
-          ),
-        ],
-      ),
-      body: activeTimers.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+    final tabs = [
+      const GroupsLibraryScreen(),
+      const PresetsLibraryScreen(),
+      // ── Phase 5 placeholder ───────────────────────────────────────────────
+      Center(
+        child: activeRoutine == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.timer_off_outlined,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No routine running',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Go to Routines and tap ▶ to start one',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
-                    Icons.timer_outlined,
+                    Icons.play_circle_filled,
                     size: 64,
-                    color: Colors.grey,
+                    color: Colors.deepOrangeAccent,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
-                    'No timers running',
+                    'Running: ${activeRoutine.definition.name}',
                     style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap + to start a timer',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.stop),
+                    label: const Text('Stop'),
+                    onPressed: () =>
+                        ref.read(activeRoutineProvider.notifier).stopRoutine(),
                   ),
                 ],
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80),
-              itemCount: activeTimers.length,
-              itemBuilder: (context, index) {
-                final timer = activeTimers[index];
-                return ActiveTimerCard(timer: timer);
-              },
-            ),
+      ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: Text(_titles[_currentIndex])),
+      body: tabs[_currentIndex],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.schedule_outlined),
+            selectedIcon: Icon(Icons.schedule),
+            label: 'Routines',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.library_books_outlined),
+            selectedIcon: Icon(Icons.library_books),
+            label: 'Library',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.timer_outlined),
+            selectedIcon: Icon(Icons.timer),
+            label: 'Active',
+          ),
+        ],
+      ),
     );
   }
 }
