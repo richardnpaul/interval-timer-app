@@ -37,7 +37,10 @@ class BackgroundTimerManager {
     }
     try {
       final definition = GroupNode.fromJson(routineJson);
-      _engine = RoutineEngine(definition);
+      _engine = RoutineEngine(
+        definition,
+        onTimerFinished: (inst) => audioService.playAlarm(inst.soundPath),
+      );
       // Immediately push initial state so UI reflects "running" straight away.
       service.invoke('update', {
         'definition': routineJson,

@@ -579,4 +579,59 @@ void main() {
       expect(rootChildInstance(resumed, 1).status, NodeStatus.running);
     });
   });
+
+  // -------------------------------------------------------------------------
+  group('onTimerFinished callback', () {
+    test('callback triggers when a timer finishes', () {
+      final def = GroupNode(
+        name: 'test',
+        children: [TimerInstance(id: 'a', name: 'A', duration: 2)],
+      );
+      TimerInstance? finishedInst;
+      final engine = RoutineEngine(
+        def,
+        onTimerFinished: (i) => finishedInst = i,
+      );
+
+      engine.tick(); // A(1s remaining)
+      expect(finishedInst, isNull);
+
+      engine.tick(); // A(0s remaining) -> finished
+      expect(finishedInst, isNotNull);
+      expect(finishedInst!.id, 'a');
+    });
+
+    test('callback triggers multiple times for repetitions', () {
+      final def = GroupNode(
+        name: 'test',
+        repetitions: 2,
+        children: [TimerInstance(id: 'a', name: 'A', duration: 1)],
+      );
+      int callCount = 0;
+      final engine = RoutineEngine(def, onTimerFinished: (_) => callCount++);
+
+      engine.tick(); // Rep 1 finish
+      expect(callCount, 1);
+
+      engine.tick(); // Rep 2 finish
+      expect(callCount, 2);
+    });
+
+    test('callback triggers for autoRestart leaf', () {
+      final def = GroupNode(
+        name: 'test',
+        children: [
+          TimerInstance(id: 'a', name: 'A', duration: 1, autoRestart: true),
+        ],
+      );
+      int callCount = 0;
+      final engine = RoutineEngine(def, onTimerFinished: (_) => callCount++);
+
+      engine.tick(); // Finish first iteration
+      expect(callCount, 1);
+
+      engine.tick(); // Finish second iteration
+      expect(callCount, 2);
+    });
+  });
 }

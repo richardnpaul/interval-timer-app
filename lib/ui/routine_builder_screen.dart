@@ -5,6 +5,7 @@ import 'package:interval_timer_app/engine/tree_utils.dart';
 import 'package:interval_timer_app/models/group_node.dart';
 import 'package:interval_timer_app/models/timer_instance.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
+import 'package:interval_timer_app/ui/widgets/audio_picker_tile.dart';
 import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
 
 /// Tree-based routine editor.
@@ -315,6 +316,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     final durCtrl = TextEditingController(text: '${inst.duration}');
     String? color = inst.color ?? kColorPalette.first;
     bool autoRestart = inst.autoRestart;
+    String? soundPath = inst.soundPath;
 
     showModalBottomSheet<void>(
       context: context,
@@ -365,6 +367,11 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                   value: autoRestart,
                   onChanged: (v) => set(() => autoRestart = v),
                 ),
+                const SizedBox(height: 8),
+                AudioPickerTile(
+                  initialPath: soundPath,
+                  onChanged: (newPath) => set(() => soundPath = newPath),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
@@ -376,6 +383,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                             int.tryParse(durCtrl.text.trim()) ?? inst.duration,
                         color: color,
                         autoRestart: autoRestart,
+                        soundPath: soundPath,
                       );
                       Navigator.pop(ctx);
                       setState(() => _root = updateNodeById(_root, updated));

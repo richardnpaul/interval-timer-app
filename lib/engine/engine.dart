@@ -7,16 +7,21 @@ import 'package:interval_timer_app/models/timer_node.dart';
 /// Runs inside the background isolate and is trivially unit-testable.
 class RoutineEngine {
   final GroupNode definition;
+  final void Function(TimerInstance)? onTimerFinished;
   late GroupNodeState state;
 
-  RoutineEngine(this.definition) {
+  RoutineEngine(this.definition, {this.onTimerFinished}) {
     state = _buildGroupState(definition);
     // Start the root group immediately.
     _activateGroup(state, definition);
   }
 
   /// Reconstruct engine from a persisted state + its original definition.
-  RoutineEngine.resume({required this.definition, required this.state});
+  RoutineEngine.resume({
+    required this.definition,
+    required this.state,
+    this.onTimerFinished,
+  });
 
   // ---------------------------------------------------------------------------
   // Public API
@@ -147,6 +152,8 @@ class RoutineEngine {
     s.remainingSeconds--;
 
     if (s.remainingSeconds <= 0) {
+      onTimerFinished?.call(def);
+
       if (def.autoRestart) {
         // Loop the leaf: reset and keep running.
         s.remainingSeconds = s.totalSeconds;

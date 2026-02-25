@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
+import 'package:interval_timer_app/ui/widgets/audio_picker_tile.dart';
 import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
 
 /// Create or edit a [TimerPreset].
@@ -21,6 +22,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _durationCtrl;
   String? _selectedColor;
+  String? _soundPath;
 
   @override
   void initState() {
@@ -29,6 +31,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
     _nameCtrl = TextEditingController(text: p?.name ?? '');
     _durationCtrl = TextEditingController(text: '${p?.defaultDuration ?? 60}');
     _selectedColor = p?.color ?? kColorPalette.first;
+    _soundPath = p?.soundPath;
   }
 
   @override
@@ -53,7 +56,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
       name: _nameCtrl.text.trim(),
       defaultDuration: duration,
       color: _selectedColor,
-      soundPath: widget.preset?.soundPath,
+      soundPath: _soundPath,
     );
     await ref.read(presetsProvider.notifier).savePreset(preset);
     if (mounted) Navigator.of(context).pop();
@@ -135,14 +138,10 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Sound (placeholder) ───────────────────────────────────────
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.music_note),
-              title: const Text('Alarm Sound'),
-              subtitle: const Text('Custom sounds coming soon'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: null,
+            // ── Sound ────────────────────────────────────────────────────
+            AudioPickerTile(
+              initialPath: _soundPath,
+              onChanged: (newPath) => setState(() => _soundPath = newPath),
             ),
           ],
         ),
