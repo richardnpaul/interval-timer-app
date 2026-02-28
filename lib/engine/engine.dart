@@ -1,19 +1,24 @@
-import 'package:interval_timer_app/engine/node_state.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_instance.dart';
-import 'package:interval_timer_app/models/timer_node.dart';
+import 'dart:math';
+import 'package:meta/meta.dart';
+import '../models/timer_node.dart';
+import '../models/timer_instance.dart';
+import '../models/group_node.dart';
+import 'node_state.dart';
 
-/// Pure-Dart, Flutter-free execution engine for a routine tree.
-/// Runs inside the background isolate and is trivially unit-testable.
+/// The core finite-state machine that processes routine ticks.
+///
+/// It holds a reference to the [definition] (static tree) and maintains [state]
+/// (dynamic runtime status).
 class RoutineEngine {
   final GroupNode definition;
   final void Function(TimerInstance)? onTimerFinished;
   late GroupNodeState state;
 
-  RoutineEngine(this.definition, {this.onTimerFinished}) {
-    state = _buildGroupState(definition);
-    // Start the root group immediately.
-    _activateGroup(state, definition);
+  RoutineEngine(this.definition, {this.onTimerFinished, GroupNodeState? state}) {
+    this.state = state ?? buildGroupState(definition);
+    if (state == null) {
+      activateGroup(this.state, definition);
+    }
   }
 
   /// Reconstruct engine from a persisted state + its original definition.
@@ -23,12 +28,8 @@ class RoutineEngine {
     this.onTimerFinished,
   });
 
-  // ---------------------------------------------------------------------------
-  // Public API
-  // ---------------------------------------------------------------------------
-
-  /// Advance all running nodes by one second.
-  /// Returns true if the root routine has fully completed.
+  /// Advances the entire routine by 1 second.
+  /// Returns true if the routine has fully completed.
   bool tick() {
     if (state.status == NodeStatus.finished) return true;
     _tickGroup(state, definition);
@@ -39,17 +40,19 @@ class RoutineEngine {
   // State construction
   // ---------------------------------------------------------------------------
 
-  static GroupNodeState _buildGroupState(GroupNode def) => GroupNodeState(
+  @visibleForTesting
+  static GroupNodeState buildGroupState(GroupNode def) => GroupNodeState(
     nodeId: def.id,
-    childStates: def.children.map(_buildNodeState).toList(),
+    childStates: def.children.map(buildNode).toList(),
   );
 
-  static NodeState _buildNodeState(TimerNode def) => switch (def) {
+  @visibleForTesting
+  static NodeState buildNode(TimerNode def) => switch (def) {
     TimerInstance d => TimerInstanceState(
       nodeId: d.id,
       totalSeconds: d.duration,
     ),
-    GroupNode d => _buildGroupState(d),
+    GroupNode d => buildGroupState(d),
     _ => throw ArgumentError('Unknown node type: ${def.runtimeType}'),
   };
 
@@ -76,7 +79,7 @@ class RoutineEngine {
 
     final childState = groupState.childStates[idx];
     final childDef = groupDef.children[idx];
-    final childFinished = _tickNode(childState, childDef);
+    final childFinished = tickNode(childState, childDef);
 
     if (childFinished) {
       // Advance to the next child.
@@ -85,7 +88,7 @@ class RoutineEngine {
         _onGroupIterationComplete(groupState, groupDef);
       } else {
         // Activate the next child.
-        _activateNode(
+        activateNode(
           groupState.childStates[groupState.activeChildIndex],
           groupDef.children[groupState.activeChildIndex],
         );
@@ -99,7 +102,7 @@ class RoutineEngine {
       final childState = groupState.childStates[i];
       final childDef = groupDef.children[i];
       if (childState.status != NodeStatus.finished) {
-        _tickNode(childState, childDef);
+        tickNode(childState, childDef);
         if (childState.status != NodeStatus.finished) allFinished = false;
       }
     }
@@ -109,25 +112,18 @@ class RoutineEngine {
   }
 
   /// Called when all children of a group have finished one pass.
-  ///
-  /// Decision table:
-  ///   repetitions == 0  → infinite loop, never finishes.
-  ///   currentRepetition < repetitions → more reps remain, reset & continue.
-  ///   otherwise         → mark group finished.
   void _onGroupIterationComplete(
     GroupNodeState groupState,
     GroupNode groupDef,
   ) {
     final infinite = groupDef.repetitions == 0;
-    // `> 1` is redundant (repetitions==1 means currentRep==1, so 1<1 is false),
-    // but the explicit check makes the intent clear at a glance.
     final hasMoreReps = groupState.currentRepetition < groupDef.repetitions;
 
     if (infinite || hasMoreReps) {
       // Reset for the next repetition.
       groupState.currentRepetition++;
-      _resetGroup(groupState, groupDef);
-      _activateGroup(groupState, groupDef);
+      resetGroup(groupState, groupDef);
+      activateGroup(groupState, groupDef);
     } else {
       groupState.status = NodeStatus.finished;
     }
@@ -138,7 +134,8 @@ class RoutineEngine {
   // ---------------------------------------------------------------------------
 
   /// Returns true when the node has finished (and won't restart itself).
-  bool _tickNode(NodeState nodeState, TimerNode nodeDef) {
+  @visibleForTesting
+  bool tickNode(NodeState nodeState, TimerNode nodeDef) {
     return switch ((nodeState, nodeDef)) {
       (TimerInstanceState s, TimerInstance d) => _tickInstance(s, d),
       (GroupNodeState s, GroupNode d) => _tickGroupNode(s, d),
@@ -151,9 +148,6 @@ class RoutineEngine {
 
     s.remainingSeconds--;
 
-    // Trigger sound if we reached the offset.
-    // Use == to ensure it only triggers once per iteration.
-    // Only trigger here if it wasn't already triggered at activation (i.e. offset < total).
     if (s.remainingSeconds == def.soundOffset &&
         def.soundOffset < s.totalSeconds) {
       onTimerFinished?.call(def);
@@ -161,13 +155,10 @@ class RoutineEngine {
 
     if (s.remainingSeconds <= 0) {
       if (def.autoRestart) {
-        // Loop the leaf: reset and keep running.
         s.remainingSeconds = s.totalSeconds;
-        // Trigger sound immediately if offset >= total.
         if (def.soundOffset >= s.totalSeconds) {
           onTimerFinished?.call(def);
         }
-        // Returns false — it never "finishes" while autoRestart is on.
         return false;
       } else {
         s.status = NodeStatus.finished;
@@ -187,51 +178,53 @@ class RoutineEngine {
   // Activation & reset helpers
   // ---------------------------------------------------------------------------
 
-  void _activateGroup(GroupNodeState groupState, GroupNode groupDef) {
+  @visibleForTesting
+  void activateGroup(GroupNodeState groupState, GroupNode groupDef) {
     groupState.status = NodeStatus.running;
     if (groupDef.executionMode == ExecutionMode.sequential) {
       groupState.activeChildIndex = 0;
       if (groupState.childStates.isNotEmpty) {
-        _activateNode(groupState.childStates[0], groupDef.children[0]);
+        activateNode(groupState.childStates[0], groupDef.children[0]);
       }
     } else {
-      // Parallel: activate all children.
       groupState.activeChildIndex = -1;
       for (int i = 0; i < groupState.childStates.length; i++) {
-        _activateNode(groupState.childStates[i], groupDef.children[i]);
+        activateNode(groupState.childStates[i], groupDef.children[i]);
       }
     }
   }
 
-  void _activateNode(NodeState nodeState, TimerNode nodeDef) {
+  @visibleForTesting
+  void activateNode(NodeState nodeState, TimerNode nodeDef) {
     switch ((nodeState, nodeDef)) {
       case (TimerInstanceState s, TimerInstance d):
         s.status = NodeStatus.running;
-        // Trigger sound immediately if offset >= total.
         if (d.soundOffset >= s.totalSeconds) {
           onTimerFinished?.call(d);
         }
       case (GroupNodeState s, GroupNode d):
-        _activateGroup(s, d);
+        activateGroup(s, d);
       default:
         throw ArgumentError('State/definition type mismatch on activate');
     }
   }
 
-  void _resetGroup(GroupNodeState groupState, GroupNode groupDef) {
+  @visibleForTesting
+  void resetGroup(GroupNodeState groupState, GroupNode groupDef) {
     groupState.status = NodeStatus.waiting;
     groupState.activeChildIndex = 0;
     for (int i = 0; i < groupState.childStates.length; i++) {
-      _resetNode(groupState.childStates[i], groupDef.children[i]);
+      resetNode(groupState.childStates[i], groupDef.children[i]);
     }
   }
 
-  void _resetNode(NodeState nodeState, TimerNode nodeDef) {
+  @visibleForTesting
+  void resetNode(NodeState nodeState, TimerNode nodeDef) {
     switch ((nodeState, nodeDef)) {
       case (TimerInstanceState s, TimerInstance _):
         s.reset();
       case (GroupNodeState s, GroupNode d):
-        _resetGroup(s, d);
+        resetGroup(s, d);
       default:
         throw ArgumentError('State/definition type mismatch on reset');
     }

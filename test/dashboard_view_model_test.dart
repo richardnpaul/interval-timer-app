@@ -85,6 +85,31 @@ GroupNode _mixedParallelSeq() => GroupNode(
   ],
 );
 
+/// Nested Parallel: Seq root -> [Outer Parallel ([Inner Seq ([A(2)])])]
+GroupNode _nestedParallel() => GroupNode(
+  id: 'root',
+  name: 'Root',
+  executionMode: ExecutionMode.sequential,
+  children: [
+    GroupNode(
+      id: 'outer',
+      name: 'Outer',
+      executionMode: ExecutionMode.parallel,
+      repetitions: 2,
+      children: [
+        GroupNode(
+          id: 'inner',
+          name: 'Inner',
+          executionMode: ExecutionMode.sequential,
+          children: [
+            TimerInstance(id: 'a', name: 'A', duration: 2),
+          ],
+        ),
+      ],
+    ),
+  ],
+);
+
 // ===========================================================================
 // Tests
 // ===========================================================================
@@ -375,6 +400,46 @@ void main() {
         breadcrumb: '',
       );
       expect(item.progress, 0.0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  group('Nested Parallel Breadcrumbs & Duration', () {
+    test('breadcrumb shows path for nested parallel child', () {
+      // Seq root -> Outer Parallel -> Inner Seq -> A
+      final vm = vmAt(_nestedParallel(), 0);
+      // Root is Sequential, but it contains ‘Outer’ which is parallel.
+      // SequentialDashboardViewModel hero logic picks the first running leaf.
+      expect(vm, isA<SequentialDashboardViewModel>());
+      final sVm = vm as SequentialDashboardViewModel;
+      expect(sVm.hero!.breadcrumb, 'Outer > Inner');
+    });
+
+    test('duration estimation for parallel group', () {
+      final root = GroupNode(
+        name: 'Root',
+        children: [
+          _nestedParallel(),
+          TimerInstance(name: 'Tail', duration: 10),
+        ],
+      );
+      final vm = vmAt(root, 0) as SequentialDashboardViewModel;
+      expect(vm.upNext.length, 1);
+      expect(vm.upNext[0].name, 'Tail');
+
+      final innerBreadcrumb = GroupNode(
+        name: 'ParallelRoot',
+        executionMode: ExecutionMode.parallel,
+        children: [
+          GroupNode(
+             name: 'Alpha',
+             children: [TimerInstance(name: 'Beta', duration: 10)],
+          ),
+        ],
+      );
+      final vmParallel = vmAt(innerBreadcrumb, 0) as ParallelDashboardViewModel;
+      // Parallel root children use their own name as breadcrumb start.
+      expect(vmParallel.activeTimers.first.breadcrumb, 'Alpha');
     });
   });
 }

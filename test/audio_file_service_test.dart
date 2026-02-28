@@ -3,11 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:interval_timer_app/services/audio_file_service.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('audioFileServiceProvider provides an instance', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final service = container.read(audioFileServiceProvider);
+    expect(service, isA<AudioFileService>());
+  });
 
   late AudioFileService service;
   late MockPathProviderPlatform mockPathProvider;

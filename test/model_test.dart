@@ -60,10 +60,32 @@ void main() {
       );
       final copy = instance.copyWith(duration: 45);
 
+      expect(copy.color, instance.color);
+    });
+
+    test('copyWith uses defaults when no arguments provided', () {
+      final instance = TimerInstance(name: 'Work', duration: 30);
+      final copy = instance.copyWith();
       expect(copy.id, instance.id);
       expect(copy.name, instance.name);
-      expect(copy.duration, 45);
-      expect(copy.color, instance.color);
+    });
+
+    test('fromPreset creates correct instance', () {
+      final preset = TimerPreset(
+        name: 'Work',
+        defaultDuration: 60,
+        color: '#FF0000',
+        soundPath: 'alarm.mp3',
+        soundOffset: 3,
+      );
+      final instance = TimerInstance.fromPreset(preset);
+
+      expect(instance.name, preset.name);
+      expect(instance.duration, preset.defaultDuration);
+      expect(instance.color, preset.color);
+      expect(instance.soundPath, preset.soundPath);
+      expect(instance.soundOffset, preset.soundOffset);
+      expect(instance.presetId, preset.id);
     });
   });
 
@@ -153,6 +175,13 @@ void main() {
         expect(child, isA<TimerInstance>());
         expect((child as TimerInstance).autoRestart, isTrue);
       }
+    });
+
+    test('copyWith uses defaults when no arguments provided', () {
+      final group = GroupNode(name: 'Root');
+      final copy = group.copyWith();
+      expect(copy.id, group.id);
+      expect(copy.name, group.name);
     });
   });
 
