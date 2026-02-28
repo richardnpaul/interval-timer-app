@@ -13,7 +13,11 @@ class RoutineEngine {
   final void Function(TimerInstance)? onTimerFinished;
   late GroupNodeState state;
 
-  RoutineEngine(this.definition, {this.onTimerFinished, GroupNodeState? state}) {
+  RoutineEngine(
+    this.definition, {
+    this.onTimerFinished,
+    GroupNodeState? state,
+  }) {
     this.state = state ?? buildGroupState(definition);
     if (state == null) {
       activateGroup(this.state, definition);

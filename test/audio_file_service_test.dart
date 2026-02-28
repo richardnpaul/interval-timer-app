@@ -43,7 +43,10 @@ void main() {
 
     group('generateUniqueFileName', () {
       test('preserves extension', () {
-        expect(service.generateUniqueFileName('test.mp3').endsWith('.mp3'), true);
+        expect(
+          service.generateUniqueFileName('test.mp3').endsWith('.mp3'),
+          true,
+        );
       });
     });
 
@@ -64,14 +67,11 @@ void main() {
 
       test('saves file and returns path on success', () async {
         final tempDir = Directory.systemTemp.createTempSync();
-        final sourceFile = File(p.join(tempDir.path, 'source.mp3'))..createSync();
+        final sourceFile = File(p.join(tempDir.path, 'source.mp3'))
+          ..createSync();
 
         mockFilePicker.nextResult = FilePickerResult([
-          PlatformFile(
-            name: 'source.mp3',
-            path: sourceFile.path,
-            size: 0,
-          )
+          PlatformFile(name: 'source.mp3', path: sourceFile.path, size: 0),
         ]);
 
         final result = await service.pickAndSaveAudio();

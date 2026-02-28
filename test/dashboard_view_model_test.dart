@@ -101,9 +101,7 @@ GroupNode _nestedParallel() => GroupNode(
           id: 'inner',
           name: 'Inner',
           executionMode: ExecutionMode.sequential,
-          children: [
-            TimerInstance(id: 'a', name: 'A', duration: 2),
-          ],
+          children: [TimerInstance(id: 'a', name: 'A', duration: 2)],
         ),
       ],
     ),
@@ -432,8 +430,8 @@ void main() {
         executionMode: ExecutionMode.parallel,
         children: [
           GroupNode(
-             name: 'Alpha',
-             children: [TimerInstance(name: 'Beta', duration: 10)],
+            name: 'Alpha',
+            children: [TimerInstance(name: 'Beta', duration: 10)],
           ),
         ],
       );

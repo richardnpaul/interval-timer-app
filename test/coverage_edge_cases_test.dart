@@ -26,17 +26,20 @@ void main() {
       expect(soundCount, 2); // 1 at start, 1 at loop
     });
 
-    test('RoutineEngine activation with mismatched types throws ArgumentError', () {
-      final instance = TimerInstance(name: 'A', duration: 10);
-      final root = GroupNode(name: 'Root', children: [instance]);
-      final engine = RoutineEngine(root);
+    test(
+      'RoutineEngine activation with mismatched types throws ArgumentError',
+      () {
+        final instance = TimerInstance(name: 'A', duration: 10);
+        final root = GroupNode(name: 'Root', children: [instance]);
+        final engine = RoutineEngine(root);
 
-      // We need to access private methods to force this via Fake
-      expect(
-        () => engine.activateNode(FakeState(), FakeNode()),
-        throwsArgumentError,
-      );
-    });
+        // We need to access private methods to force this via Fake
+        expect(
+          () => engine.activateNode(FakeState(), FakeNode()),
+          throwsArgumentError,
+        );
+      },
+    );
 
     test('NodeState.fromJson throws for unknown type', () {
       expect(
@@ -46,9 +49,9 @@ void main() {
     });
 
     test('GroupNode.fromJson with missing fields uses defaults', () {
-       final group = GroupNode.fromJson({'id': '1', 'name': 'G'});
-       expect(group.executionMode, ExecutionMode.sequential);
-       expect(group.repetitions, 1);
+      final group = GroupNode.fromJson({'id': '1', 'name': 'G'});
+      expect(group.executionMode, ExecutionMode.sequential);
+      expect(group.repetitions, 1);
     });
   });
 
@@ -90,10 +93,7 @@ void main() {
     });
 
     test('RoutineEngine.buildNode throws on unknown node type', () {
-      expect(
-        () => RoutineEngine.buildNode(FakeNode()),
-        throwsArgumentError,
-      );
+      expect(() => RoutineEngine.buildNode(FakeNode()), throwsArgumentError);
     });
 
     test('GroupNode reset recursive path', () {
@@ -108,10 +108,7 @@ void main() {
       expect(loopEngine.state.currentRepetition, 2);
 
       // Hit resetNode recursive path
-      final parentGroup = GroupNode(
-        name: 'Parent',
-        children: [loopGroup],
-      );
+      final parentGroup = GroupNode(name: 'Parent', children: [loopGroup]);
       final parentEngine = RoutineEngine(parentGroup);
       parentEngine.resetNode(parentEngine.state, parentGroup);
     });
@@ -122,7 +119,8 @@ void main() {
         children: [TimerInstance(name: 'A', duration: 1)],
       );
       final engine = RoutineEngine(root);
-      engine.tick(); // A finishes -> triggers _onGroupIterationComplete via idx checking (line 88)
+      engine
+          .tick(); // A finishes -> triggers _onGroupIterationComplete via idx checking (line 88)
       expect(engine.state.status, NodeStatus.finished);
     });
 
@@ -161,20 +159,28 @@ void main() {
         ],
       );
       final state2 = RoutineEngine.buildGroupState(root2);
-      final vm2 = buildDashboardViewModel(root2, state2) as SequentialDashboardViewModel;
+      final vm2 =
+          buildDashboardViewModel(root2, state2)
+              as SequentialDashboardViewModel;
       expect(vm2.upNext[0].durationSeconds, 20); // max(10, 20)
     });
   });
 }
 
 class FakeNode implements TimerNode {
-  @override String get id => 'fake';
-  @override String get name => 'fake';
-  @override Map<String, dynamic> toJson() => {};
+  @override
+  String get id => 'fake';
+  @override
+  String get name => 'fake';
+  @override
+  Map<String, dynamic> toJson() => {};
 }
 
 class FakeState implements NodeState {
-  @override String get nodeId => 'fake';
-  @override NodeStatus get status => NodeStatus.waiting;
-  @override Map<String, dynamic> toJson() => {};
+  @override
+  String get nodeId => 'fake';
+  @override
+  NodeStatus get status => NodeStatus.waiting;
+  @override
+  Map<String, dynamic> toJson() => {};
 }
