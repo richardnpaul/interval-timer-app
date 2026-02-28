@@ -150,7 +150,7 @@ void main() {
       // We need to trigger the parallel duration estimation in dashboard_view_model
       // It's used when estimating UpNextItems or Hero duration.
       // SequentialDashboardViewModel uses _estimateDuration for upNext.
-      final vm = buildDashboardViewModel(root, state);
+      buildDashboardViewModel(root, state);
       // Since it's Seq -> Parallel, hero is Parallel, upNext[0] would be the next child.
       // If we move to upNext...
       final root2 = GroupNode(

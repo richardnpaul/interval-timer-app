@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:meta/meta.dart';
 import '../models/timer_node.dart';
 import '../models/timer_instance.dart';
