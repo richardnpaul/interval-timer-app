@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -20,23 +21,25 @@ class AudioFileService {
     final pickedFile = result.files.first;
     if (pickedFile.path == null) return null;
 
-    final targetPath = await _saveToInternalStorage(
+    final targetPath = await saveToInternalStorage(
       File(pickedFile.path!),
       pickedFile.name,
     );
     return targetPath;
   }
 
-  Future<String> _saveToInternalStorage(File sourceFile, String name) async {
-    final soundsDir = await _getSoundsDirectory();
-    final fileName = _generateUniqueFileName(name);
+  @visibleForTesting
+  Future<String> saveToInternalStorage(File sourceFile, String name) async {
+    final soundsDir = await getSoundsDirectory();
+    final fileName = generateUniqueFileName(name);
     final targetPath = p.join(soundsDir.path, fileName);
 
     await sourceFile.copy(targetPath);
     return targetPath;
   }
 
-  Future<Directory> _getSoundsDirectory() async {
+  @visibleForTesting
+  Future<Directory> getSoundsDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
     final soundsDir = Directory(p.join(appDir.path, 'sounds'));
     if (!await soundsDir.exists()) {
@@ -45,7 +48,8 @@ class AudioFileService {
     return soundsDir;
   }
 
-  String _generateUniqueFileName(String originalName) {
+  @visibleForTesting
+  String generateUniqueFileName(String originalName) {
     final ext = p.extension(originalName);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return '$timestamp$ext';
