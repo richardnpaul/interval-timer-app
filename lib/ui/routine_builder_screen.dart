@@ -497,6 +497,52 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                     child: const Text('Save'),
                   ),
                 ),
+                if (isRoot) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text(
+                        'Delete Routine',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Routine'),
+                            content: const Text(
+                              'Are you sure you want to delete this routine?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          if (!ctx.mounted) return;
+                          Navigator.pop(ctx); // close modal
+                          await ref
+                              .read(routinesProvider.notifier)
+                              .deleteRoutine(_root.id);
+                          if (!mounted) return;
+                          Navigator.of(context).pop(); // close builder
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

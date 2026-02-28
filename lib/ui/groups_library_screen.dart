@@ -124,6 +124,21 @@ class GroupsLibraryScreen extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'Delete routine',
+                          onPressed: () {
+                            ref
+                                .read(routinesProvider.notifier)
+                                .deleteRoutine(routine.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('"${routine.name}" deleted'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.play_circle_outline),
                           tooltip: 'Start routine',
                           onPressed: () => ref

@@ -88,7 +88,27 @@ class PresetsLibraryScreen extends ConsumerWidget {
                     ),
                     title: Text(preset.name),
                     subtitle: Text(label),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          tooltip: 'Delete preset',
+                          onPressed: () {
+                            ref
+                                .read(presetsProvider.notifier)
+                                .deletePreset(preset.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('"${preset.name}" deleted'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => EditPresetScreen(preset: preset),

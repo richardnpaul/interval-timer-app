@@ -62,7 +62,8 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
       soundOffset: _soundOffset,
     );
     await ref.read(presetsProvider.notifier).savePreset(preset);
-    if (mounted) Navigator.of(context).pop();
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   @override
@@ -149,6 +150,47 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
               onOffsetChanged: (newOffset) =>
                   setState(() => _soundOffset = newOffset),
             ),
+            if (!isNew) ...[
+              const SizedBox(height: 24),
+              TextButton.icon(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                label: const Text(
+                  'Delete Preset',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Preset'),
+                      content: const Text(
+                        'Are you sure you want to delete this preset?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await ref
+                        .read(presetsProvider.notifier)
+                        .deletePreset(widget.preset!.id);
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ],
           ],
         ),
       ),
