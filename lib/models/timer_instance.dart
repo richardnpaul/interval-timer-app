@@ -23,6 +23,10 @@ final class TimerInstance implements TimerNode {
   /// When true, this timer loops itself indefinitely without needing a GroupNode.
   final bool autoRestart;
 
+  /// Seconds before the end of the timer to trigger the alarm sound.
+  /// 0 = trigger at the end (default).
+  final int soundOffset;
+
   /// Optional reference to the preset this was created from.
   /// Used for future "show source preset" UI, not required for execution.
   final String? presetId;
@@ -34,6 +38,7 @@ final class TimerInstance implements TimerNode {
     this.color,
     this.soundPath,
     this.autoRestart = false,
+    this.soundOffset = 0,
     this.presetId,
   }) : id = id ?? const Uuid().v4();
 
@@ -43,6 +48,7 @@ final class TimerInstance implements TimerNode {
     duration: preset.defaultDuration,
     color: preset.color,
     soundPath: preset.soundPath,
+    soundOffset: preset.soundOffset,
     presetId: preset.id,
   );
 
@@ -55,6 +61,7 @@ final class TimerInstance implements TimerNode {
     'color': color,
     'soundPath': soundPath,
     'autoRestart': autoRestart,
+    'soundOffset': soundOffset,
     'presetId': presetId,
   };
 
@@ -65,6 +72,7 @@ final class TimerInstance implements TimerNode {
     color: json['color'] as String?,
     soundPath: json['soundPath'] as String?,
     autoRestart: json['autoRestart'] as bool? ?? false,
+    soundOffset: json['soundOffset'] as int? ?? 0,
     presetId: json['presetId'] as String?,
   );
 
@@ -74,6 +82,7 @@ final class TimerInstance implements TimerNode {
     String? color,
     String? soundPath,
     bool? autoRestart,
+    int? soundOffset,
   }) => TimerInstance(
     id: id,
     name: name ?? this.name,
@@ -81,6 +90,7 @@ final class TimerInstance implements TimerNode {
     color: color ?? this.color,
     soundPath: soundPath ?? this.soundPath,
     autoRestart: autoRestart ?? this.autoRestart,
+    soundOffset: soundOffset ?? this.soundOffset,
     presetId: presetId,
   );
 }

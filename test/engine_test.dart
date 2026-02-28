@@ -634,4 +634,54 @@ void main() {
       expect(callCount, 2);
     });
   });
+
+  group('Sound Offset Triggering', () {
+    test('callback triggers at exactly soundOffset seconds remaining', () {
+      final def = GroupNode(
+        name: 'test',
+        children: [
+          TimerInstance(
+            id: 'a',
+            name: 'A',
+            duration: 10,
+            soundOffset: 3, // Trigger at 3s remaining
+          ),
+        ],
+      );
+      int triggerCount = 0;
+      final engine = RoutineEngine(def, onTimerFinished: (_) => triggerCount++);
+
+      // Ticks 1-6: remaining 9 down to 4. triggerCount should be 0.
+      tickN(engine, 6);
+      expect(triggerCount, 0);
+
+      // Tick 7: remaining becomes 3. triggerCount should be 1.
+      engine.tick();
+      expect(triggerCount, 1);
+
+      // Ticks 8-10: remaining 2, 1, 0. triggerCount should still be 1.
+      tickN(engine, 3);
+      expect(triggerCount, 1);
+    });
+
+    test('callback triggers immediately if duration <= offset', () {
+      final def = GroupNode(
+        name: 'test',
+        children: [
+          TimerInstance(
+            id: 'a',
+            name: 'A',
+            duration: 2,
+            soundOffset: 5, // Trigger immediately? or at start?
+          ),
+        ],
+      );
+      int triggerCount = 0;
+      final engine = RoutineEngine(def, onTimerFinished: (_) => triggerCount++);
+
+      // First tick: remaining 2 -> 1. Since 1 < 5, it should have triggered.
+      engine.tick();
+      expect(triggerCount, 1);
+    });
+  });
 }

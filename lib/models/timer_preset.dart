@@ -19,12 +19,16 @@ class TimerPreset {
   /// Default alarm sound path. Null = built-in beep.
   final String? soundPath;
 
+  /// Default sound offset in seconds.
+  final int soundOffset;
+
   TimerPreset({
     String? id,
     required this.name,
     required this.defaultDuration,
     this.color,
     this.soundPath,
+    this.soundOffset = 0,
   }) : id = id ?? const Uuid().v4();
 
   factory TimerPreset.fromJson(Map<String, dynamic> json) =>

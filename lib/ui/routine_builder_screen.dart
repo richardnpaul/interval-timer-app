@@ -317,6 +317,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     String? color = inst.color ?? kColorPalette.first;
     bool autoRestart = inst.autoRestart;
     String? soundPath = inst.soundPath;
+    int soundOffset = inst.soundOffset;
 
     showModalBottomSheet<void>(
       context: context,
@@ -370,7 +371,10 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                 const SizedBox(height: 8),
                 AudioPickerTile(
                   initialPath: soundPath,
-                  onChanged: (newPath) => set(() => soundPath = newPath),
+                  soundOffset: soundOffset,
+                  onPathChanged: (newPath) => set(() => soundPath = newPath),
+                  onOffsetChanged: (newOffset) =>
+                      set(() => soundOffset = newOffset),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -384,6 +388,7 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
                         color: color,
                         autoRestart: autoRestart,
                         soundPath: soundPath,
+                        soundOffset: soundOffset,
                       );
                       Navigator.pop(ctx);
                       setState(() => _root = updateNodeById(_root, updated));

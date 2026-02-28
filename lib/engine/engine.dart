@@ -151,12 +151,22 @@ class RoutineEngine {
 
     s.remainingSeconds--;
 
-    if (s.remainingSeconds <= 0) {
+    // Trigger sound if we reached the offset.
+    // Use == to ensure it only triggers once per iteration.
+    // Only trigger here if it wasn't already triggered at activation (i.e. offset < total).
+    if (s.remainingSeconds == def.soundOffset &&
+        def.soundOffset < s.totalSeconds) {
       onTimerFinished?.call(def);
+    }
 
+    if (s.remainingSeconds <= 0) {
       if (def.autoRestart) {
         // Loop the leaf: reset and keep running.
         s.remainingSeconds = s.totalSeconds;
+        // Trigger sound immediately if offset >= total.
+        if (def.soundOffset >= s.totalSeconds) {
+          onTimerFinished?.call(def);
+        }
         // Returns false — it never "finishes" while autoRestart is on.
         return false;
       } else {
@@ -195,8 +205,12 @@ class RoutineEngine {
 
   void _activateNode(NodeState nodeState, TimerNode nodeDef) {
     switch ((nodeState, nodeDef)) {
-      case (TimerInstanceState s, TimerInstance _):
+      case (TimerInstanceState s, TimerInstance d):
         s.status = NodeStatus.running;
+        // Trigger sound immediately if offset >= total.
+        if (d.soundOffset >= s.totalSeconds) {
+          onTimerFinished?.call(d);
+        }
       case (GroupNodeState s, GroupNode d):
         _activateGroup(s, d);
       default:

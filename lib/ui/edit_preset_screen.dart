@@ -23,6 +23,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
   late final TextEditingController _durationCtrl;
   String? _selectedColor;
   String? _soundPath;
+  int _soundOffset = 0;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
     _durationCtrl = TextEditingController(text: '${p?.defaultDuration ?? 60}');
     _selectedColor = p?.color ?? kColorPalette.first;
     _soundPath = p?.soundPath;
+    _soundOffset = p?.soundOffset ?? 0;
   }
 
   @override
@@ -57,6 +59,7 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
       defaultDuration: duration,
       color: _selectedColor,
       soundPath: _soundPath,
+      soundOffset: _soundOffset,
     );
     await ref.read(presetsProvider.notifier).savePreset(preset);
     if (mounted) Navigator.of(context).pop();
@@ -141,7 +144,10 @@ class _EditPresetScreenState extends ConsumerState<EditPresetScreen> {
             // ── Sound ────────────────────────────────────────────────────
             AudioPickerTile(
               initialPath: _soundPath,
-              onChanged: (newPath) => setState(() => _soundPath = newPath),
+              soundOffset: _soundOffset,
+              onPathChanged: (newPath) => setState(() => _soundPath = newPath),
+              onOffsetChanged: (newOffset) =>
+                  setState(() => _soundOffset = newOffset),
             ),
           ],
         ),

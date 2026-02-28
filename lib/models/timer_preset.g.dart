@@ -12,6 +12,7 @@ TimerPreset _$TimerPresetFromJson(Map<String, dynamic> json) => TimerPreset(
   defaultDuration: (json['defaultDuration'] as num).toInt(),
   color: json['color'] as String?,
   soundPath: json['soundPath'] as String?,
+  soundOffset: (json['soundOffset'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$TimerPresetToJson(TimerPreset instance) =>
@@ -21,4 +22,5 @@ Map<String, dynamic> _$TimerPresetToJson(TimerPreset instance) =>
       'defaultDuration': instance.defaultDuration,
       'color': instance.color,
       'soundPath': instance.soundPath,
+      'soundOffset': instance.soundOffset,
     };
