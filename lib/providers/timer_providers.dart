@@ -3,14 +3,13 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import '../models/active_timer.dart';
 import '../models/timer_preset.dart';
-import '../models/timer_group.dart';
+import '../models/group_node.dart';
+import 'package:interval_timer_app/engine/node_state.dart';
 import 'package:interval_timer_app/services/storage_service.dart';
 
 // --- Services & Wrappers ---
 
-// Provide a wrapper for the background service to allow mocking in tests.
 class BackgroundServiceWrapper {
   Stream<Map<String, dynamic>?> on(String method) =>
       FlutterBackgroundService().on(method);
@@ -69,146 +68,103 @@ class PresetsNotifier extends Notifier<List<TimerPreset>> {
   }
 }
 
-// --- Groups ---
+// --- Routines ---
 
-final groupsProvider = NotifierProvider<GroupsNotifier, List<TimerGroup>>(
-  GroupsNotifier.new,
+/// Each routine is a root GroupNode that can contain any tree of TimerNodes.
+final routinesProvider = NotifierProvider<RoutinesNotifier, List<GroupNode>>(
+  RoutinesNotifier.new,
 );
 
-class GroupsNotifier extends Notifier<List<TimerGroup>> {
+class RoutinesNotifier extends Notifier<List<GroupNode>> {
   @override
-  List<TimerGroup> build() {
-    return ref.read(storageServiceProvider).loadGroups();
+  List<GroupNode> build() {
+    return ref.read(storageServiceProvider).loadRoutines();
   }
 
-  Future<void> saveGroup(TimerGroup group) async {
-    final storage = ref.read(storageServiceProvider);
-    final existingIndex = state.indexWhere((g) => g.id == group.id);
+  Future<void> saveRoutine(GroupNode routine) async {
+    final existingIndex = state.indexWhere((r) => r.id == routine.id);
     if (existingIndex != -1) {
       state = [
         for (int i = 0; i < state.length; i++)
-          if (i == existingIndex) group else state[i],
+          if (i == existingIndex) routine else state[i],
       ];
     } else {
-      state = [...state, group];
+      state = [...state, routine];
     }
-    await storage.saveGroups(state);
+    await ref.read(storageServiceProvider).saveRoutines(state);
   }
 
-  Future<void> deleteGroup(String id) async {
-    state = state.where((g) => g.id != id).toList();
-    await ref.read(storageServiceProvider).saveGroups(state);
+  Future<void> deleteRoutine(String id) async {
+    state = state.where((r) => r.id != id).toList();
+    await ref.read(storageServiceProvider).saveRoutines(state);
   }
 }
 
-// --- Active Timers ---
+// --- Active Routine (Running State) ---
 
-// The source of truth for all currently active (running/paused) timers.
-final activeTimersProvider =
-    NotifierProvider<ActiveTimersNotifier, List<ActiveTimer>>(
-      ActiveTimersNotifier.new,
+/// Snapshot of the currently executing routine.
+class ActiveRoutineSnapshot {
+  final GroupNode definition;
+  final GroupNodeState state;
+
+  const ActiveRoutineSnapshot({required this.definition, required this.state});
+}
+
+/// Holds the currently executing routine definition + live runtime state.
+final activeRoutineProvider =
+    NotifierProvider<ActiveRoutineNotifier, ActiveRoutineSnapshot?>(
+      ActiveRoutineNotifier.new,
     );
 
-class ActiveTimersNotifier extends Notifier<List<ActiveTimer>> {
+class ActiveRoutineNotifier extends Notifier<ActiveRoutineSnapshot?> {
   @override
-  List<ActiveTimer> build() {
-    _initServiceListener();
-    return [];
+  ActiveRoutineSnapshot? build() {
+    _initServiceListeners();
+    return null;
   }
 
-  void _initServiceListener() {
-    ref.read(backgroundServiceWrapperProvider).on('update').listen((event) {
-      if (event != null && event['timers'] != null) {
-        final List<dynamic> timersData = event['timers'];
-        // "Single Source of Truth" - we trust the service entirely.
-        // This handles app restarts (where local state is empty) automatically.
-        try {
-          state = timersData
-              .map(
-                (data) => ActiveTimer.fromJson(Map<String, dynamic>.from(data)),
-              )
-              .toList();
-        } catch (e) {
-          debugPrint('Error deserializing timers: $e');
+  void _initServiceListeners() {
+    final svc = ref.read(backgroundServiceWrapperProvider);
+
+    svc.on('update').listen((event) {
+      if (event == null) return;
+      try {
+        if (event['state'] == null) {
+          state = null;
+          return;
         }
+        final definition = GroupNode.fromJson(
+          Map<String, dynamic>.from(event['definition']),
+        );
+        final runState = GroupNodeState.fromJson(
+          Map<String, dynamic>.from(event['state']),
+        );
+        state = ActiveRoutineSnapshot(definition: definition, state: runState);
+      } catch (e) {
+        debugPrint('Error deserializing routine update: $e');
       }
     });
-  }
 
-  void _syncToService() {
-    ref.read(backgroundServiceWrapperProvider).invoke('syncTimers', {
-      'timers': state.map((t) => t.toJson()).toList(),
+    svc.on('routineFinished').listen((_) {
+      state = null;
     });
   }
 
-  void addTimer(TimerPreset preset) {
-    // Optimistic update
-    state = [...state, ActiveTimer(preset: preset, state: TimerState.running)];
-    _syncToService();
+  void _syncToService(GroupNode? routine) {
+    ref.read(backgroundServiceWrapperProvider).invoke('syncRoutine', {
+      'routine': routine?.toJson(),
+    });
   }
 
-  void addGroup(TimerGroup group, List<TimerPreset> allPresets) {
-    // Determine which timers are in this group
-    final timersToAdd = allPresets
-        .where((preset) => group.timerIds.contains(preset.id))
-        .map((preset) => ActiveTimer(preset: preset, state: TimerState.running))
-        .toList();
-
-    // In parallel mode, we simply add them all to the active list
-    state = [...state, ...timersToAdd];
-    _syncToService();
+  /// Start executing a routine.
+  void startRoutine(GroupNode routine) {
+    _syncToService(routine);
+    // State will be updated via the 'update' event from the service.
   }
 
-  void removeTimer(String activeTimerId) {
-    state = state.where((t) => t.id != activeTimerId).toList();
-    _syncToService();
-  }
-
-  void pauseTimer(String activeTimerId) {
-    state = [
-      for (final t in state)
-        if (t.id == activeTimerId)
-          ActiveTimer(
-            id: t.id,
-            preset: t.preset,
-            remainingSeconds: t.remainingSeconds,
-            state: TimerState.paused,
-          )
-        else
-          t,
-    ];
-    _syncToService();
-  }
-
-  void resumeTimer(String activeTimerId) {
-    state = [
-      for (final t in state)
-        if (t.id == activeTimerId)
-          ActiveTimer(
-            id: t.id,
-            preset: t.preset,
-            remainingSeconds: t.remainingSeconds,
-            state: TimerState.running,
-          )
-        else
-          t,
-    ];
-    _syncToService();
-  }
-
-  void restartTimer(String activeTimerId) {
-    state = [
-      for (final t in state)
-        if (t.id == activeTimerId)
-          ActiveTimer(
-            id: t.id,
-            preset: t.preset,
-            remainingSeconds: t.preset.durationSeconds,
-            state: TimerState.running,
-          )
-        else
-          t,
-    ];
-    _syncToService();
+  /// Stop the currently running routine.
+  void stopRoutine() {
+    state = null;
+    _syncToService(null);
   }
 }

@@ -2,74 +2,82 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:interval_timer_app/models/active_timer.dart';
-import 'package:interval_timer_app/models/timer_preset.dart';
+import 'package:interval_timer_app/engine/engine.dart';
+import 'package:interval_timer_app/models/group_node.dart';
 import 'package:interval_timer_app/services/audio_service.dart';
+
+// ---------------------------------------------------------------------------
+// Background Timer Manager
+// ---------------------------------------------------------------------------
 
 class BackgroundTimerManager {
   final ServiceInstance service;
   final AudioService audioService;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final FlutterLocalNotificationsPlugin notifications;
 
-  List<ActiveTimer> backgroundTimers = [];
+  RoutineEngine? _engine;
   Timer? _ticker;
 
-  BackgroundTimerManager(
-    this.service,
-    this.audioService,
-    this.flutterLocalNotificationsPlugin,
-  );
+  BackgroundTimerManager(this.service, this.audioService, this.notifications);
 
   void start() {
-    _ticker = Timer.periodic(const Duration(seconds: 1), onTick);
+    _ticker ??= Timer.periodic(const Duration(seconds: 1), _onTick);
   }
-
-  bool get isRunning => _ticker != null;
 
   void stop() {
     _ticker?.cancel();
     _ticker = null;
   }
 
-  void syncTimers(List<dynamic> rawTimers) {
-    backgroundTimers = rawTimers.map((e) {
-      final presetJson = e['preset'] as Map<String, dynamic>;
-      return ActiveTimer(
-        id: e['id'],
-        preset: TimerPreset.fromJson(presetJson),
-        remainingSeconds: e['remainingSeconds'],
-        state: TimerState.values.firstWhere((s) => s.toString() == e['state']),
+  void syncRoutine(Map<String, dynamic>? routineJson) {
+    if (routineJson == null) {
+      _engine = null;
+      service.invoke('update', {'state': null});
+      return;
+    }
+    try {
+      final definition = GroupNode.fromJson(routineJson);
+      _engine = RoutineEngine(
+        definition,
+        onTimerFinished: (inst) => audioService.playAlarm(inst.soundPath),
       );
-    }).toList();
+      // Immediately push initial state so UI reflects "running" straight away.
+      service.invoke('update', {
+        'definition': routineJson,
+        'state': _engine!.state.toJson(),
+      });
+    } catch (e) {
+      // Malformed payload — ignore.
+    }
   }
 
-  Future<void> onTick(Timer timer) async {
-    if (backgroundTimers.isNotEmpty) {
-      for (var t in backgroundTimers) {
-        if (t.state == TimerState.running) {
-          if (t.tick()) {
-            // Timer Finished/Restarted
-            audioService.playAlarm(t.preset.soundPath);
-          }
-        }
-      }
+  Future<void> _onTick(Timer _) async {
+    final engine = _engine;
+    if (engine == null) return;
 
-      service.invoke('update', {
-        'timers': backgroundTimers.map((t) => t.toJson()).toList(),
-      });
+    final finished = engine.tick();
+
+    service.invoke('update', {
+      'definition': engine.definition.toJson(),
+      'state': engine.state.toJson(),
+    });
+
+    if (finished) {
+      _engine = null;
+      service.invoke('routineFinished', {});
     }
 
+    _updateNotification(engine);
+  }
+
+  void _updateNotification(RoutineEngine engine) async {
     if (service is AndroidServiceInstance) {
       try {
         if (await (service as AndroidServiceInstance).isForegroundService()) {
-          final runningCount = backgroundTimers
-              .where((t) => t.state == TimerState.running)
-              .length;
-
-          flutterLocalNotificationsPlugin.show(
+          notifications.show(
             id: 888,
             title: 'Interval Timer',
-            body: runningCount > 0 ? '$runningCount timers running' : 'Ready',
+            body: 'Running: ${engine.definition.name}',
             notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(
                 'my_foreground',
@@ -80,44 +88,46 @@ class BackgroundTimerManager {
             ),
           );
         }
-      } catch (e) {
-        // Ignore errors from isForegroundService in background isolate
-      }
+      } catch (_) {}
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Service entry point
+// ---------------------------------------------------------------------------
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   try {
     DartPluginRegistrant.ensureInitialized();
-  } catch (e) {
-    // Log error but continue as some plugins might still work
-  }
-
-  final audioService = AudioService();
-  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  } catch (_) {}
 
   final manager = BackgroundTimerManager(
     service,
-    audioService,
-    flutterLocalNotificationsPlugin,
+    AudioService(),
+    FlutterLocalNotificationsPlugin(),
   );
 
-  service.on('syncTimers').listen((event) {
-    if (event == null) return;
-    if (event.containsKey('timers')) {
-      manager.syncTimers(event['timers']);
-    }
+  service.on('syncRoutine').listen((event) {
+    manager.syncRoutine(
+      event != null && event['routine'] != null
+          ? Map<String, dynamic>.from(event['routine'])
+          : null,
+    );
   });
 
-  service.on('stop').listen((event) {
+  service.on('stop').listen((_) {
     manager.stop();
     service.stopSelf();
   });
 
   manager.start();
 }
+
+// ---------------------------------------------------------------------------
+// Service initializer (called from main.dart)
+// ---------------------------------------------------------------------------
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
@@ -151,12 +161,10 @@ Future<void> initializeService() async {
     iosConfiguration: IosConfiguration(
       autoStart: true,
       onForeground: onStart,
-      onBackground: onStartTimer,
+      onBackground: _onStartBackground,
     ),
   );
 }
 
 @pragma('vm:entry-point')
-bool onStartTimer(ServiceInstance service) {
-  return true;
-}
+bool _onStartBackground(ServiceInstance service) => true;
