@@ -12,9 +12,16 @@ repos:
 
   - repo: local
     hooks:
-      - id: flutter-format
-        name: Flutter Format
+      - id: dart-format
+        name: Dart Format
         entry: dart format --set-exit-if-changed .
+        language: system
+        types: [dart]
+        pass_filenames: false
+
+      - id: dart-fix
+        name: Dart fix
+        entry: dart fix --apply
         language: system
         types: [dart]
         pass_filenames: false
@@ -22,6 +29,13 @@ repos:
       - id: flutter-analyze
         name: Flutter Analyze
         entry: flutter analyze --fatal-infos --fatal-warnings
+        language: system
+        types: [dart]
+        pass_filenames: false
+
+      - id: flutter-test
+        name: Flutter Test
+        entry: flutter test
         language: system
         types: [dart]
         pass_filenames: false
