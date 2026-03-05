@@ -21,7 +21,9 @@ Goals:
 
 Framework: Flutter
 Language: Dart
-Testing: flutter_test
+State Management: Riverpod (flutter_riverpod, riverpod_annotation)
+Testing: flutter_test, mockito
+Code Generation: build_runner
 
 ---
 
@@ -47,6 +49,10 @@ Auto-fix detection
 
 dart fix --dry-run
 
+Code Generation (Run before tests/analysis if needed)
+
+flutter pub run build_runner build --delete-conflicting-outputs
+
 ---
 
 # Development Workflow
@@ -63,6 +69,8 @@ Before writing code:
 2. Identify units to test
 3. Identify edge cases
 4. Plan tests
+5. Run code generation if new models/providers are planned:
+   `flutter pub run build_runner build --delete-conflicting-outputs`
 
 Output a short implementation plan.
 
@@ -129,6 +137,7 @@ Rules:
 - No analyzer warnings or errors
 - Code must already be correctly formatted
 - `dart fix` must not suggest fixes
+- All generated code must be up to date (run `build_runner` if necessary)
 
 If any command fails:
 
@@ -188,6 +197,8 @@ Requirements:
 - 100% coverage for code introduced in this task
 - All branches exercised
 - Edge cases tested
+
+Note: Generated files (`.g.dart`, `.mocks.dart`) are excluded from coverage requirements.
 
 If coverage is insufficient:
 
@@ -280,18 +291,33 @@ Code should:
 
 ---
 
+# State Management Principles
+
+Using Riverpod:
+
+- Logic should be encapsulated in `@riverpod` providers or `Notifier` classes.
+- UI should remain thin, consuming state via `ref.watch`.
+- Avoid global state that is not managed by providers.
+- Use `FutureProvider` or `StreamProvider` for asynchronous data.
+- Ensure all business logic is unit testable by decoupling it from the widget tree.
+
+---
+
 # Directory Structure
 
 lib/
-  features/
-    feature_name/
-      data/
-      domain/
-      presentation/
+  engine/      # Core timer and logic engine
+  models/      # Data models and entities
+  providers/   # Riverpod providers and state logic
+  services/    # Infrastructure services (Audio, Storage)
+  ui/          # Screens, widgets, and view models
 
 test/
-  features/
-    feature_name/
+  engine/
+  models/
+  providers/
+  services/
+  ui/
 
 Tests must mirror the production structure.
 
