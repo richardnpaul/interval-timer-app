@@ -61,12 +61,33 @@ dev_dependencies:
   # rules and activating additional ones.
   build_runner: ^2.11.1
   coverage: ^1.15.0
+  flutter_launcher_icons: ^0.14.4
   flutter_lints: ^6.0.0
   json_serializable: ^6.12.0
   mockito: ^5.4.5
   path_provider_platform_interface: ^2.1.2
   plugin_platform_interface: ^2.1.8
   riverpod_generator: ^4.0.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: "assets/icon/foreground.png"
+  min_sdk_android: 21 # android min sdk value
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#121212"
+    theme_color: "#FF5722"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 48 # min required 48x48
+  macos:
+    generate: true
+    image_path: "assets/icon/icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
