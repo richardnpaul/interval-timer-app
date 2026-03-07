@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:interval_timer_app/models/group_node.dart';
+import 'package:interval_timer_app/models/timer_instance.dart';
 import 'package:interval_timer_app/models/timer_preset.dart';
 import 'package:interval_timer_app/providers/timer_providers.dart';
 import 'package:interval_timer_app/ui/groups_library_screen.dart';
@@ -11,6 +12,7 @@ import 'package:interval_timer_app/ui/presets_library_screen.dart';
 import 'package:interval_timer_app/ui/edit_preset_screen.dart';
 import 'package:interval_timer_app/ui/routine_builder_screen.dart';
 import 'package:interval_timer_app/ui/widgets/audio_picker_tile.dart';
+import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
 import 'package:interval_timer_app/services/storage_service.dart';
 import 'package:interval_timer_app/services/audio_file_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -255,6 +257,264 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.clear));
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('EditPresetScreen: Color & Audio Picker interactions', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: EditPresetScreen()),
+        ),
+      );
+
+      // Tap the second color in the ColorSwatchPicker (kColorPalette[1])
+      await tester.tap(find.byType(GestureDetector).at(1));
+      await tester.pumpAndSettle();
+
+      // Tap Alarm Sound tile
+      await tester.tap(find.text('Alarm Sound'));
+      await tester.pumpAndSettle();
+
+      // Change Offset
+      await tester.enterText(find.byType(TextFormField).last, '5');
+      await tester.pumpAndSettle();
+
+      // Give it a name to allow saving
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Interaction Test',
+      );
+
+      // Save
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final presets = container.read(presetsProvider);
+      final saved = presets.firstWhere((p) => p.name == 'Interaction Test');
+      expect(saved.soundPath, 'mock/path.mp3');
+      expect(saved.soundOffset, 5);
+      expect(saved.color, kColorPalette[1]);
+    });
+
+    test('Constructor coverage for Groups & Presets screens', () {
+      expect(const GroupsLibraryScreen().key, isNull);
+      expect(const PresetsLibraryScreen().key, isNull);
+    });
+
+    testWidgets('RoutineBuilderScreen: Edge and Interaction Coverage', (
+      tester,
+    ) async {
+      final t1 = TimerInstance(id: 't1', name: 'T1', duration: 10);
+      final t2 = TimerInstance(id: 't2', name: 'T2', duration: 10);
+      final subGroup = GroupNode(
+        id: 'g2',
+        name: 'Sub Group',
+        children: [t1, t2],
+      );
+      final r1 = GroupNode(id: 'r1', name: 'Root', children: [subGroup]);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(home: RoutineBuilderScreen(existing: r1)),
+        ),
+      );
+
+      // 1. Selection Mode & Wrap
+      await tester.tap(find.byTooltip('Multi-select'));
+      await tester.pumpAndSettle();
+
+      // Check Checkboxes: Sub Group(0), T1(1), T2(2)
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byType(Checkbox).first,
+      ); // Uncheck Sub Group to hit `_selectedIds.remove`
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Checkbox).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Checkbox).at(2));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Wrap selected in group'));
+      await tester.pumpAndSettle();
+
+      // 2. Edit Sub-Group (first edit icon is on sub-group wrapper now)
+      await tester.tap(find.byTooltip('Edit').first);
+      await tester.pumpAndSettle();
+
+      // Enter bad reps
+      await tester.enterText(find.byType(TextField).last, 'abc');
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      // 3. Edit Timer Instance
+      await tester.tap(find.byTooltip('Edit').last);
+      await tester.pumpAndSettle();
+
+      // Change Color Ensure we pick picker inside sheet
+      final colorTarget1 = find
+          .descendant(
+            of: find.byType(ColorSwatchPicker),
+            matching: find.byType(GestureDetector),
+          )
+          .at(1);
+      await tester.ensureVisible(colorTarget1);
+      await tester.tap(colorTarget1);
+      await tester.pumpAndSettle();
+      // Toggle Switch
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+      // Change Sound & Offset
+      await tester.ensureVisible(find.text('Alarm Sound'));
+      await tester.tap(find.text('Alarm Sound'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byType(TextFormField).last);
+      await tester.enterText(find.byType(TextFormField).last, '2');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final saveTarget = find.text('Save Changes');
+      await tester.ensureVisible(saveTarget);
+      await tester.tap(saveTarget);
+      await tester.pumpAndSettle();
+
+      // 4. Quick Timer sheet Color Picker
+      await tester.tap(find.byTooltip('Add to routine'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Quick Timer'));
+      await tester.pumpAndSettle();
+
+      final colorTarget2 = find
+          .descendant(
+            of: find.byType(ColorSwatchPicker),
+            matching: find.byType(GestureDetector),
+          )
+          .at(2);
+      await tester.ensureVisible(colorTarget2);
+      await tester.tap(colorTarget2);
+      await tester.pumpAndSettle();
+      final quickNameField = find
+          .descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(TextField),
+          )
+          .first;
+      await tester.ensureVisible(quickNameField);
+      await tester.enterText(quickNameField, 'Quick');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final addTarget = find.widgetWithText(FilledButton, 'Add Timer');
+      await tester.ensureVisible(addTarget);
+      await tester.tap(addTarget);
+      await tester.pumpAndSettle();
+
+      // 5. Wrap Error (Different parents)
+      await tester.tap(find.byTooltip('Multi-select'));
+      await tester.pumpAndSettle();
+
+      // T1/T2 are child of wrapper(Root->Sub->Wrap), Quick is child of Root
+      await tester.tap(find.byType(Checkbox).at(2)); // T1 (nested)
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Checkbox).last); // Quick (root child)
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Wrap selected in group'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('All selected items must have the same parent to wrap.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byTooltip('Cancel selection'));
+      await tester.pumpAndSettle();
+
+      // 6. Save routine correctly
+      await tester.enterText(find.byType(TextField).first, 'Valid Save Name');
+      await tester.tap(find.widgetWithText(TextButton, 'Save'));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('RoutineBuilderScreen: Empty presets Library Sheet', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: RoutineBuilderScreen(
+              existing: GroupNode(id: 'r1', name: 'R'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byTooltip('Add to routine'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('From Library'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No presets yet. Create some in the Library tab first.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('GroupsLibraryScreen: Tap and Swipe to dismiss', (
+      tester,
+    ) async {
+      final r1 = GroupNode(id: 'r_swipe', name: 'Swipe Routine');
+      await container.read(routinesProvider.notifier).saveRoutine(r1);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: GroupsLibraryScreen()),
+        ),
+      );
+
+      // Tap
+      await tester.tap(find.text('Swipe Routine'));
+      await tester.pumpAndSettle();
+      expect(find.byType(RoutineBuilderScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // Swipe to dismiss
+      await tester.drag(find.text('Swipe Routine'), const Offset(-500.0, 0.0));
+      await tester.pumpAndSettle();
+      expect(find.text('Swipe Routine'), findsNothing);
+    });
+
+    testWidgets('PresetsLibraryScreen: Tap and Swipe to dismiss', (
+      tester,
+    ) async {
+      final p1 = TimerPreset(
+        id: 'p_swipe',
+        name: 'Swipe Preset',
+        defaultDuration: 30,
+      );
+      await container.read(presetsProvider.notifier).savePreset(p1);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: PresetsLibraryScreen()),
+        ),
+      );
+
+      // Tap
+      await tester.tap(find.text('Swipe Preset'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EditPresetScreen), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // Swipe to dismiss
+      await tester.drag(find.text('Swipe Preset'), const Offset(-500.0, 0.0));
+      await tester.pumpAndSettle();
+      expect(find.text('Swipe Preset'), findsNothing);
     });
   });
 }
