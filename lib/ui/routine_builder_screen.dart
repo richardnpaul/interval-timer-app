@@ -50,11 +50,10 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
   }
 
   String? _parentOf(String nodeId) {
-    final hit = flattenTree(_root).cast<NodeEntry?>().firstWhere(
-      (e) => e!.node.id == nodeId,
-      orElse: () => null,
-    );
-    return hit?.parentId;
+    for (final e in flattenTree(_root)) {
+      if (e.node.id == nodeId) return e.parentId;
+    }
+    return null;
   }
 
   // ── Top-level actions ──────────────────────────────────────────────────────
