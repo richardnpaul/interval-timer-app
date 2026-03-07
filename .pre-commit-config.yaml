@@ -35,7 +35,14 @@ repos:
 
       - id: flutter-test
         name: Flutter Test
-        entry: flutter test
+        entry: flutter test --coverage
+        language: system
+        types: [dart]
+        pass_filenames: false
+
+      - id: verify-coverage
+        name: Verify 100% Test Coverage
+        entry: tool/check_coverage.py
         language: system
         types: [dart]
         pass_filenames: false

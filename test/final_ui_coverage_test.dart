@@ -299,8 +299,10 @@ void main() {
     });
 
     test('Constructor coverage for Groups & Presets screens', () {
-      expect(const GroupsLibraryScreen().key, isNull);
-      expect(const PresetsLibraryScreen().key, isNull);
+      // ignore: prefer_const_constructors
+      expect(GroupsLibraryScreen().key, isNull);
+      // ignore: prefer_const_constructors
+      expect(PresetsLibraryScreen().key, isNull);
     });
 
     testWidgets('RoutineBuilderScreen: Edge and Interaction Coverage', (
