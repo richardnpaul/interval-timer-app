@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:interval_timer_app/engine/engine.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/services/audio_service.dart';
+import 'package:interval_timer_app/features/timer/application/engine.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/services/audio_service.dart';
 
 // ---------------------------------------------------------------------------
 // Background Timer Manager

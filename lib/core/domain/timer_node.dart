@@ -1,5 +1,5 @@
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_instance.dart';
+import 'group_node.dart';
+import 'timer_instance.dart';
 
 /// Abstract base for all nodes in a routine tree.
 /// Use the 'type' key in JSON to distinguish leaves from branches.

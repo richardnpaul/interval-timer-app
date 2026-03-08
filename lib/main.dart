@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'services/background_service.dart';
-import 'services/storage_service.dart';
-import 'ui/dashboard_screen.dart';
+import 'package:interval_timer_app/core/services/background_service.dart';
+import 'package:interval_timer_app/core/services/storage_service.dart';
+import 'package:interval_timer_app/features/timer/presentation/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

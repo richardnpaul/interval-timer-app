@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/timer_preset.dart';
-import '../models/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_preset.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
 
 final storageServiceProvider = Provider<StorageService>((ref) {
   throw UnimplementedError('StorageService must be initialized');

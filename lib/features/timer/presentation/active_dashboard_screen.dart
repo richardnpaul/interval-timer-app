@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/engine/dashboard_view_model.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
+import 'package:interval_timer_app/features/timer/application/dashboard_view_model.dart';
+import 'package:interval_timer_app/features/timer/application/active_routine_notifier.dart';
+import 'package:interval_timer_app/core/widgets/color_swatch_picker.dart';
 
 // ---------------------------------------------------------------------------
 // Root widget

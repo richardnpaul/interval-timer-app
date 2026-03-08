@@ -1,8 +1,8 @@
 import 'package:meta/meta.dart';
-import '../models/timer_node.dart';
-import '../models/timer_instance.dart';
-import '../models/group_node.dart';
-import 'node_state.dart';
+import 'package:interval_timer_app/core/domain/timer_node.dart';
+import 'package:interval_timer_app/core/domain/timer_instance.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import '../domain/node_state.dart';
 
 /// The core finite-state machine that processes routine ticks.
 ///

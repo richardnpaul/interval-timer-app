@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_preset.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/groups_library_screen.dart';
-import 'package:interval_timer_app/ui/presets_library_screen.dart';
-import 'package:interval_timer_app/ui/edit_preset_screen.dart';
-import 'package:interval_timer_app/ui/routine_builder_screen.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_preset.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/features/library/presentation/groups_library_screen.dart';
+import 'package:interval_timer_app/features/library/presentation/presets_library_screen.dart';
+import 'package:interval_timer_app/features/library/presentation/edit_preset_screen.dart';
+import 'package:interval_timer_app/features/routine_builder/presentation/routine_builder_screen.dart';
 
 void main() {
   group('Explicit Deletion UI Tests', () {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/edit_preset_screen.dart';
-import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/features/library/presentation/edit_preset_screen.dart';
+import 'package:interval_timer_app/core/widgets/color_swatch_picker.dart';
 
 /// Full Library screen: list all presets, create, edit, delete.
 class PresetsLibraryScreen extends ConsumerWidget {
