@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/active_dashboard_screen.dart';
-import 'package:interval_timer_app/ui/groups_library_screen.dart';
-import 'package:interval_timer_app/ui/presets_library_screen.dart';
+import 'package:interval_timer_app/core/providers/service_providers.dart';
+import 'package:interval_timer_app/features/timer/presentation/active_dashboard_screen.dart';
+import 'package:interval_timer_app/features/library/presentation/groups_library_screen.dart';
+import 'package:interval_timer_app/features/library/presentation/presets_library_screen.dart';
 
 /// Root shell with three bottom-navigation tabs:
 ///   0 — Routines (build & start);

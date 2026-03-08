@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/services/audio_file_service.dart';
+import 'package:interval_timer_app/core/services/audio_file_service.dart';
 
 class AudioPickerTile extends ConsumerWidget {
   final String? initialPath;

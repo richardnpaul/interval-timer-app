@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/models/timer_preset.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/widgets/audio_picker_tile.dart';
-import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
+import 'package:interval_timer_app/core/domain/timer_preset.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/core/widgets/audio_picker_tile.dart';
+import 'package:interval_timer_app/core/widgets/color_swatch_picker.dart';
 
 /// Create or edit a [TimerPreset].
 /// Pass [preset] to edit an existing one; leave null to create new.

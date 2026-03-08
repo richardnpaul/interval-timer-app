@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:interval_timer_app/engine/engine.dart';
-import 'package:interval_timer_app/engine/node_state.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_instance.dart';
+import 'package:interval_timer_app/features/timer/application/engine.dart';
+import 'package:interval_timer_app/features/timer/domain/node_state.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_instance.dart';
 
 // ---------------------------------------------------------------------------
 // Helpers

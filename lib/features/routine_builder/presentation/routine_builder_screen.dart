@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/engine/tree_utils.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_instance.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/widgets/audio_picker_tile.dart';
-import 'package:interval_timer_app/ui/widgets/color_swatch_picker.dart';
+import 'package:interval_timer_app/core/utils/tree_utils.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_instance.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/core/widgets/audio_picker_tile.dart';
+import 'package:interval_timer_app/core/widgets/color_swatch_picker.dart';
 
 /// Tree-based routine editor.
 ///

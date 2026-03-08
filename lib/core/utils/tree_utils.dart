@@ -1,5 +1,5 @@
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_node.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_node.dart';
 
 /// One row in the flattened tree as rendered in a ListView.
 class NodeEntry {

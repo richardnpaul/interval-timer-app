@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/models/timer_instance.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/routine_builder_screen.dart';
-import 'package:interval_timer_app/services/storage_service.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/core/domain/timer_instance.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/features/routine_builder/presentation/routine_builder_screen.dart';
+import 'package:interval_timer_app/core/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

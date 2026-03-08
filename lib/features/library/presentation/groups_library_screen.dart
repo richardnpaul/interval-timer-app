@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:interval_timer_app/models/group_node.dart';
-import 'package:interval_timer_app/providers/timer_providers.dart';
-import 'package:interval_timer_app/ui/routine_builder_screen.dart';
+import 'package:interval_timer_app/core/domain/group_node.dart';
+import 'package:interval_timer_app/features/library/application/library_notifiers.dart';
+import 'package:interval_timer_app/features/timer/application/active_routine_notifier.dart';
+import 'package:interval_timer_app/features/routine_builder/presentation/routine_builder_screen.dart';
 
 /// Full Routines screen: list all routines, create, edit, delete, start.
 class GroupsLibraryScreen extends ConsumerWidget {
