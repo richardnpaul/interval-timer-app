@@ -4,6 +4,7 @@ import 'package:interval_timer_app/core/providers/service_providers.dart';
 import 'package:interval_timer_app/features/timer/presentation/active_dashboard_screen.dart';
 import 'package:interval_timer_app/features/library/presentation/groups_library_screen.dart';
 import 'package:interval_timer_app/features/library/presentation/presets_library_screen.dart';
+import 'package:interval_timer_app/features/settings/presentation/settings_screen.dart';
 
 /// Root shell with three bottom-navigation tabs:
 ///   0 — Routines (build & start);
@@ -36,7 +37,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_currentIndex])),
+      appBar: AppBar(
+        title: Text(_titles[_currentIndex]),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          ),
+        ],
+      ),
       body: tabs[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,

@@ -25,7 +25,7 @@ class ActiveDashboardScreen extends ConsumerWidget {
       FinishedDashboardViewModel() => _FinishedView(vm: vm),
       SequentialDashboardViewModel() => _SequentialView(vm: vm),
       ParallelDashboardViewModel() => _ParallelView(vm: vm),
-      IdleDashboardViewModel() => const _IdleView(),
+      _ => const _IdleView(),
     };
   }
 }

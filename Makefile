@@ -47,11 +47,8 @@ test: ## Run flutter tests
 	flutter test
 
 coverage: ## Run tests with coverage and generate HTML report
-	@echo "Running tests with coverage..."
 	flutter test --coverage
-	@echo "Generating HTML report..."
-	genhtml coverage/lcov.info -o coverage/html
-	@echo "Coverage report generated at: coverage/html/index.html"
+	./tool/check_coverage.py
 
 test-all: lint test ## Run lint and then tests
 
@@ -63,7 +60,7 @@ emulators: ## List available emulators
 	flutter emulators
 
 run: ## Run the app
-	flutter run
+	flutter run -d emulator-5554
 
 attach: ## Attach to a running app
 	flutter attach

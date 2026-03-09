@@ -60,6 +60,7 @@ void main() {
           ProviderScope(
             overrides: [
               presetsProvider.overrideWith(() => FakePresetsNotifier([preset])),
+              routinesProvider.overrideWith(() => FakeRoutinesNotifier([])),
             ],
             child: const MaterialApp(home: PresetsLibraryScreen()),
           ),

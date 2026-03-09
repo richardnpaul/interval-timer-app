@@ -60,12 +60,14 @@ class ActiveRoutineNotifier extends Notifier<ActiveRoutineSnapshot?> {
 
   /// Start executing a routine.
   void startRoutine(GroupNode routine) {
+    ref.read(settingsServiceProvider).setWakelock(true);
     _syncToService(routine);
     // State will be updated via the 'update' event from the service.
   }
 
   /// Stop the currently running routine.
   void stopRoutine() {
+    ref.read(settingsServiceProvider).setWakelock(false);
     state = null;
     _syncToService(null);
   }
