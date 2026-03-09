@@ -101,6 +101,10 @@ DashboardViewModel buildDashboardViewModel(
   GroupNode definition,
   GroupNodeState state,
 ) {
+  if (state.status == NodeStatus.waiting || state.status == NodeStatus.paused) {
+    return IdleDashboardViewModel();
+  }
+
   if (state.status == NodeStatus.finished) {
     return FinishedDashboardViewModel(routineName: definition.name);
   }

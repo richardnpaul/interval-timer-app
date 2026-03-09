@@ -159,6 +159,7 @@ void main() {
         ],
       );
       final state2 = RoutineEngine.buildGroupState(root2);
+      state2.status = NodeStatus.running;
       final vm2 =
           buildDashboardViewModel(root2, state2)
               as SequentialDashboardViewModel;

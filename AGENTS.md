@@ -238,11 +238,8 @@ dart fix --dry-run
 
 Before completing the task run:
 
-flutter test
-flutter test --coverage
-flutter analyze
-dart format --set-exit-if-changed .
-dart fix --dry-run
+make test-all
+make coverage
 
 All commands must succeed.
 
@@ -335,6 +332,7 @@ The agent must never:
 - bypass coverage requirements
 - modify tests just to make them pass
 - ignore analyzer warnings
+- maintain 100% coverage for all new code
 
 If something unexpected happens, stop and diagnose the issue.
 
@@ -349,7 +347,7 @@ A task is complete only if:
 ✓ Implementation makes tests pass
 ✓ Intentional bug causes tests to fail
 ✓ Implementation restored and tests pass
-✓ 100% coverage achieved
+✓ 100% test coverage achieved
 ✓ Code passes flutter analyze
 ✓ Code is correctly formatted
 ✓ dart fix suggests no changes

@@ -138,7 +138,11 @@ void main() {
       // Tap FAB
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
-      expect(find.text('New Preset'), findsOneWidget);
+      expect(find.text('New Timer Preset'), findsOneWidget);
+      await tester.tap(find.text('New Timer Preset'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EditPresetScreen), findsOneWidget);
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pumpAndSettle();
 
