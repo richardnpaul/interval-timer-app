@@ -306,18 +306,21 @@ Using Riverpod:
 # Directory Structure
 
 lib/
-  engine/      # Core timer and logic engine
-  models/      # Data models and entities
-  providers/   # Riverpod providers and state logic
-  services/    # Infrastructure services (Audio, Storage)
-  ui/          # Screens, widgets, and view models
+  core/        # Shared code, base classes, and global utilities
+    domain/    # Core entities and interfaces
+    providers/ # Global Riverpod providers
+    services/  # Global infrastructure services
+    utils/     # Common helper functions
+    widgets/   # Shared UI components
+  features/    # Feature-based modules
+    [feature_name]/
+      application/  # Service classes and Notifiers (Business Logic)
+      domain/       # Data models and entities
+      presentation/ # Widgets and view logic (UI)
 
 test/
-  engine/
-  models/
-  providers/
-  services/
-  ui/
+  core/
+  features/
 
 Tests must mirror the production structure.
 
