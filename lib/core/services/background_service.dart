@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:interval_timer_app/features/timer/application/engine.dart';
 import 'package:interval_timer_app/core/domain/group_node.dart';
 import 'package:interval_timer_app/core/services/audio_service.dart';
+import 'package:interval_timer_app/core/services/storage_service.dart';
 
 // ---------------------------------------------------------------------------
 // Background Timer Manager
@@ -29,7 +31,7 @@ class BackgroundTimerManager {
     _ticker = null;
   }
 
-  void syncRoutine(Map<String, dynamic>? routineJson) {
+  Future<void> syncRoutine(Map<String, dynamic>? routineJson) async {
     if (routineJson == null) {
       _engine = null;
       service.invoke('update', {'state': null});
@@ -41,6 +43,14 @@ class BackgroundTimerManager {
         definition,
         onTimerFinished: (inst) => audioService.playAlarm(inst.soundPath),
       );
+
+      // --- Start Cue ---
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+      if (storage.isStartCueEnabled()) {
+        await audioService.playAlarm('sounds/routine-started-3s.mp3');
+      }
+
       // Immediately push initial state so UI reflects "running" straight away.
       service.invoke('update', {
         'definition': routineJson,
@@ -64,6 +74,14 @@ class BackgroundTimerManager {
 
     if (finished) {
       _engine = null;
+
+      // --- End Cue ---
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+      if (storage.isEndCueEnabled()) {
+        await audioService.playAlarm('sounds/routine-completed-3s.mp3');
+      }
+
       service.invoke('routineFinished', {});
     }
 
@@ -109,8 +127,8 @@ void onStart(ServiceInstance service) async {
     FlutterLocalNotificationsPlugin(),
   );
 
-  service.on('syncRoutine').listen((event) {
-    manager.syncRoutine(
+  service.on('syncRoutine').listen((event) async {
+    await manager.syncRoutine(
       event != null && event['routine'] != null
           ? Map<String, dynamic>.from(event['routine'])
           : null,
