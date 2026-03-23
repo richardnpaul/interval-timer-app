@@ -16,7 +16,8 @@ class AudioService {
   final Set<String> _activePaths = {};
 
   Future<void> playAlarm(String? customPath) async {
-    final path = customPath ?? 'DEFAULT_BEEP';
+    final bool isAsset = customPath == null || !customPath.startsWith('/');
+    final path = customPath ?? 'sounds/beep.mp3';
 
     // Simple throttle: don't play same sound if it started < 500ms ago
     if (_activePaths.contains(path)) return;
@@ -45,12 +46,10 @@ class AudioService {
 
       if (await audioSession.setActive(true)) {
         // 2. Play Sound
-        if (customPath != null && customPath.isNotEmpty) {
-          // Play device file
-          await player.play(DeviceFileSource(customPath));
+        if (isAsset) {
+          await player.play(AssetSource(path));
         } else {
-          // Play default asset
-          await player.play(AssetSource('sounds/beep.mp3'));
+          await player.play(DeviceFileSource(path));
         }
 
         // 3. Release focus after sound finishes
@@ -61,10 +60,10 @@ class AudioService {
     } catch (e) {
       debugPrint('AudioService error: $e');
       // Fallback
-      if (customPath != null && customPath.isNotEmpty) {
-        await player.play(DeviceFileSource(customPath));
+      if (isAsset) {
+        await player.play(AssetSource(path));
       } else {
-        await player.play(AssetSource('sounds/beep.mp3'));
+        await player.play(DeviceFileSource(path));
       }
     }
   }

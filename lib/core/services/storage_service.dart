@@ -15,6 +15,8 @@ class StorageService {
 
   static const String _keyPresets = 'timer_presets_v2';
   static const String _keyRoutines = 'timer_routines_v2';
+  static const String _keyStartCueEnabled = 'pref_audio_start_cue_enabled';
+  static const String _keyEndCueEnabled = 'pref_audio_end_cue_enabled';
 
   // --- Presets ---
 
@@ -46,5 +48,23 @@ class StorageService {
   Future<void> saveRoutines(List<GroupNode> routines) async {
     final jsonString = jsonEncode(routines.map((e) => e.toJson()).toList());
     await _prefs.setString(_keyRoutines, jsonString);
+  }
+
+  // --- Audio Cues ---
+
+  bool isStartCueEnabled() {
+    return _prefs.getBool(_keyStartCueEnabled) ?? true;
+  }
+
+  Future<void> setStartCueEnabled(bool enabled) async {
+    await _prefs.setBool(_keyStartCueEnabled, enabled);
+  }
+
+  bool isEndCueEnabled() {
+    return _prefs.getBool(_keyEndCueEnabled) ?? true;
+  }
+
+  Future<void> setEndCueEnabled(bool enabled) async {
+    await _prefs.setBool(_keyEndCueEnabled, enabled);
   }
 }
